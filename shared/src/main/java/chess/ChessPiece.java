@@ -52,7 +52,7 @@ public class ChessPiece {
 //     *
 //     * @return Collection of valid moves
 //     */
-
+    //This is for bishop,queen and rook because of their straight moves
     private void straightMoves(ChessBoard board, ChessPosition pos, int directions[][], int startR, int startC, Collection<ChessMove> moves) {
         for (int[] dir : directions) {
             int row = startR + dir[0];
