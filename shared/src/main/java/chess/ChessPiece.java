@@ -110,32 +110,7 @@ public class ChessPiece {
 
         //If piece is bishop execute this
         if(type == PieceType.BISHOP) {
-
-            //Loops over the dDirections from the adjacent square in that direction
-            for (int[] dir : dDirections) {
-                int row = startR + dir[0];
-                int col = startC + dir[1];
-
-                //moves step by step along the diagonal on the bounds of the board
-                while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
-                    //next is the next square and atMove is the piece(or null) on that square
-                    ChessPosition next = new ChessPosition(row, col);
-                    ChessPiece atMove = board.getPiece(next);
-                    //First if the square is empty the bishop can move there
-                    //if there is a piece there the bishop can capture it or stops there
-                    if (atMove == null) {
-                        moves.add(new ChessMove(myPosition, next, null));
-                    } else {
-                        if (atMove.getTeamColor() != this.pieceColor) {
-                            moves.add(new ChessMove(myPosition, next, null));
-                        }
-                        break;
-                    }
-                    //advances to the next square repeatedly until blocked
-                    row += dir[0];
-                    col += dir[1];
-                }
-            }
+            straightMoves(board, myPosition, dDirections, startR,startC,moves);
         }
         //If piece is king
         if(type == PieceType.KING){
@@ -262,68 +237,12 @@ public class ChessPiece {
         }
         //If the piece is queen first it goes through the diagonal directions first
         if(type == PieceType.QUEEN){
-            for(int[] dir: dDirections){
-                int row = startR + dir[0];
-                int col = startC + dir[1];
-                //go through empty squares, stop on enemy and capture, stop on same team
-                while(row>=1 && row<=8 && col>=1 && col<=8){
-                    ChessPosition next = new ChessPosition(row,col);
-                    ChessPiece atMove = board.getPiece(next);
-
-                    if(atMove == null){
-                        moves.add(new ChessMove(myPosition,next,null));
-                    } else{
-                        if(atMove.getTeamColor() != this.pieceColor){
-                            moves.add(new ChessMove(myPosition,next,null));
-                        }
-                        break;
-                    }
-                    row+=dir[0];
-                    col+=dir[1];
-                }
-            }
-            //this goes through the straight directions just combined of bishop and rook through these two
-            for (int[] dir: sDirections){
-                int row = startR + dir[0];
-                int col = startC + dir[1];
-                while(row >=1 && row <=8 && col >=1 && col <=8){
-                    ChessPosition next = new ChessPosition(row,col);
-                    ChessPiece atMove = board.getPiece(next);
-
-                    if(atMove==null){
-                        moves.add(new ChessMove(myPosition,next,null));
-                    } else {
-                        if(atMove.getTeamColor() != this.pieceColor){
-                            moves.add(new ChessMove(myPosition,next,null));
-                        }
-                        break;
-                    }
-                    row+=dir[0];
-                    col+=dir[1];
-                }
-            }
+            straightMoves(board,myPosition,sDirections,startR,startC,moves);
+            straightMoves(board,myPosition,dDirections,startR,startC,moves);
         }
         //If piece is rook straight directions are used
         if(type == PieceType.ROOK){
-            for(int[] dir: sDirections){
-                int row = startR+dir[0];
-                int col = startC + dir[1];
-                //go through empty squares capture it enemy, stop if teammate or off board
-                while(row >=1 && row <=8 && col >=1 && col <=8){
-                    ChessPosition next = new ChessPosition(row,col);
-                    ChessPiece atMove = board.getPiece(next);
-                    if(atMove ==null){
-                        moves.add(new ChessMove(myPosition,next,null));
-                    } else {
-                        if (atMove.getTeamColor() != this.pieceColor){
-                            moves.add(new ChessMove(myPosition,next,null));
-                        }
-                        break;
-                    }
-                    row += dir[0];
-                    col += dir[1];
-                }
-            }
+            straightMoves(board, myPosition, sDirections, startR,startC,moves);
         }
         return moves;
     }
