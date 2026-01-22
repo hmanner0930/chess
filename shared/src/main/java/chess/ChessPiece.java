@@ -76,6 +76,7 @@ public class ChessPiece {
             }
         }
     }
+    //helper function for pawn promotion cases/choices
     private void pawnPromotion(ChessPosition from, ChessPosition to, Collection<ChessMove> moves){
         moves.add(new ChessMove(from,to,PieceType.QUEEN));
         moves.add(new ChessMove(from,to,PieceType.ROOK));

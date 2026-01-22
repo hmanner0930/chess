@@ -54,7 +54,7 @@ public class ChessMove {
     public boolean equals(Object obj) {
         if (this == obj) return true; // if they are the same object return true
         if (obj == null || getClass() != obj.getClass()) return false; // if obj is null or not the same class return false
-        ChessMove gurt = (ChessMove) obj;//casts to ChessMove to be compared
-        return Objects.equals(startPosition, gurt.startPosition) && Objects.equals(endPosition,gurt.endPosition) && Objects.equals(promotionPiece, gurt.promotionPiece);
+        ChessMove other = (ChessMove) obj;//casts to ChessMove to be compared
+        return Objects.equals(startPosition, other.startPosition) && Objects.equals(endPosition,other.endPosition) && Objects.equals(promotionPiece, other.promotionPiece);
     } // compares the startPosition, endPosition, promotionPiece; If equal true otherwise false
 }

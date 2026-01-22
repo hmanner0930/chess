@@ -51,35 +51,35 @@ public class ChessBoard {
             }
         } //Iterates over every row and column and sets everything to null
         //Local variables for team color chessgame.teamcolor
-        ChessGame.TeamColor White = ChessGame.TeamColor.WHITE;
-        ChessGame.TeamColor Black = ChessGame.TeamColor.BLACK;
+        ChessGame.TeamColor WHITE = ChessGame.TeamColor.WHITE;
+        ChessGame.TeamColor BLACK = ChessGame.TeamColor.BLACK;
         //Places every white piece in the right place ChessPosition builds the coordinates and ChessPiece creates that specific piece.
-        addPiece(new ChessPosition(1,1), new ChessPiece(White,ChessPiece.PieceType.ROOK));
-        addPiece(new ChessPosition(1,2), new ChessPiece(White,ChessPiece.PieceType.KNIGHT));
-        addPiece(new ChessPosition(1,3), new ChessPiece(White,ChessPiece.PieceType.BISHOP));
-        addPiece(new ChessPosition(1,4), new ChessPiece(White,ChessPiece.PieceType.QUEEN));
-        addPiece(new ChessPosition(1,5), new ChessPiece(White,ChessPiece.PieceType.KING));
-        addPiece(new ChessPosition(1,6), new ChessPiece(White,ChessPiece.PieceType.BISHOP));
-        addPiece(new ChessPosition(1,7), new ChessPiece(White,ChessPiece.PieceType.KNIGHT));
-        addPiece(new ChessPosition(1,8), new ChessPiece(White,ChessPiece.PieceType.ROOK));
-        // for pawns White
-        //This places the white pawns all in row two
+        addPiece(new ChessPosition(1,1), new ChessPiece(WHITE,ChessPiece.PieceType.ROOK));
+        addPiece(new ChessPosition(1,2), new ChessPiece(WHITE,ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(1,3), new ChessPiece(WHITE,ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(1,4), new ChessPiece(WHITE,ChessPiece.PieceType.QUEEN));
+        addPiece(new ChessPosition(1,5), new ChessPiece(WHITE,ChessPiece.PieceType.KING));
+        addPiece(new ChessPosition(1,6), new ChessPiece(WHITE,ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(1,7), new ChessPiece(WHITE,ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(1,8), new ChessPiece(WHITE,ChessPiece.PieceType.ROOK));
+        // for pawns WHITE
+        //This places the WHITE pawns all in row two
         for(int c = 1; c<=8; c++){
-            addPiece(new ChessPosition(2,c), new ChessPiece(White, ChessPiece.PieceType.PAWN));
+            addPiece(new ChessPosition(2,c), new ChessPiece(WHITE, ChessPiece.PieceType.PAWN));
         }
-        //Places every black piece in the right place ChessPosition builds the coordinates and ChessPiece creates that specific piece.
-        addPiece(new ChessPosition(8,1), new ChessPiece(Black,ChessPiece.PieceType.ROOK));
-        addPiece(new ChessPosition(8,2), new ChessPiece(Black,ChessPiece.PieceType.KNIGHT));
-        addPiece(new ChessPosition(8,3), new ChessPiece(Black,ChessPiece.PieceType.BISHOP));
-        addPiece(new ChessPosition(8,4), new ChessPiece(Black,ChessPiece.PieceType.QUEEN));
-        addPiece(new ChessPosition(8,5), new ChessPiece(Black,ChessPiece.PieceType.KING));
-        addPiece(new ChessPosition(8,6), new ChessPiece(Black,ChessPiece.PieceType.BISHOP));
-        addPiece(new ChessPosition(8,7), new ChessPiece(Black,ChessPiece.PieceType.KNIGHT));
-        addPiece(new ChessPosition(8,8), new ChessPiece(Black,ChessPiece.PieceType.ROOK));
-        // for pawns Black
-        //This places the  black pawns all in row two
+        //Places every BLACK piece in the right place ChessPosition builds the coordinates and ChessPiece creates that specific piece.
+        addPiece(new ChessPosition(8,1), new ChessPiece(BLACK,ChessPiece.PieceType.ROOK));
+        addPiece(new ChessPosition(8,2), new ChessPiece(BLACK,ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8,3), new ChessPiece(BLACK,ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8,4), new ChessPiece(BLACK,ChessPiece.PieceType.QUEEN));
+        addPiece(new ChessPosition(8,5), new ChessPiece(BLACK,ChessPiece.PieceType.KING));
+        addPiece(new ChessPosition(8,6), new ChessPiece(BLACK,ChessPiece.PieceType.BISHOP));
+        addPiece(new ChessPosition(8,7), new ChessPiece(BLACK,ChessPiece.PieceType.KNIGHT));
+        addPiece(new ChessPosition(8,8), new ChessPiece(BLACK,ChessPiece.PieceType.ROOK));
+        // for pawns BLACK
+        //This places the  BLACK pawns all in row two
         for(int c = 1; c<=8; c++){
-            addPiece(new ChessPosition(7,c), new ChessPiece(Black, ChessPiece.PieceType.PAWN));
+            addPiece(new ChessPosition(7,c), new ChessPiece(BLACK, ChessPiece.PieceType.PAWN));
         }
     }
     // returns integer hashcode for board
@@ -95,7 +95,7 @@ public class ChessBoard {
     public boolean equals(Object obj) {
         if (this == obj) return true; //if references point to same object return true
         if (obj == null || getClass() != obj.getClass()) return false; //if obj is null or is not a chessBoard, not equal return false
-        ChessBoard gurt = (ChessBoard) obj; //Cast of the previous check
-        return Arrays.deepEquals(this.board, gurt.board); //  compares the two arrays square by square if everything matches return true
+        ChessBoard other = (ChessBoard) obj; //Cast of the previous check
+        return Arrays.deepEquals(this.board, other.board); //  compares the two arrays square by square if everything matches return true
     }
 } // deep walks through every element and compares hash of every element
