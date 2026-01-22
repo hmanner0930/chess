@@ -76,6 +76,12 @@ public class ChessPiece {
             }
         }
     }
+    private void pawnPromotion(ChessPosition from, ChessPosition to, Collection<ChessMove> moves){
+        moves.add(new ChessMove(from,to,PieceType.QUEEN));
+        moves.add(new ChessMove(from,to,PieceType.ROOK));
+        moves.add(new ChessMove(from,to,PieceType.BISHOP));
+        moves.add(new ChessMove(from,to,PieceType.KNIGHT));
+    }
     //returns all moves that a piece can make
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>(); //this collects the legal places a move can be made
@@ -193,10 +199,7 @@ public class ChessPiece {
                 if (board.getPiece(oneFor) == null){
                     //promotion
                     if(stepOnRow == promotionR){
-                        moves.add(new ChessMove(myPosition,oneFor,PieceType.QUEEN));
-                        moves.add(new ChessMove(myPosition,oneFor,PieceType.ROOK));
-                        moves.add(new ChessMove(myPosition,oneFor,PieceType.BISHOP));
-                        moves.add(new ChessMove(myPosition,oneFor,PieceType.KNIGHT));
+                        pawnPromotion(myPosition, oneFor, moves);
                     } else {
                         moves.add(new ChessMove(myPosition,oneFor,null));
                     }
@@ -225,10 +228,7 @@ public class ChessPiece {
 
                 if(atMove != null && atMove.getTeamColor() != this.pieceColor){
                     if(row == promotionR){
-                        moves.add(new ChessMove(myPosition,next,PieceType.QUEEN));
-                        moves.add(new ChessMove(myPosition,next,PieceType.ROOK));
-                        moves.add(new ChessMove(myPosition,next,PieceType.BISHOP));
-                        moves.add(new ChessMove(myPosition,next,PieceType.KNIGHT));
+                        pawnPromotion(myPosition,next,moves);
                     } else {
                         moves.add(new ChessMove(myPosition,next,null));
                     }
