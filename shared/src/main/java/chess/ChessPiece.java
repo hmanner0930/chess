@@ -49,9 +49,33 @@ public class ChessPiece {
      * Calculates all the positions a chess piece can move to
      * Does not take into account moves that are illegal due to leaving the king in
      * danger
-     *
-     * @return Collection of valid moves
-     */
+//     *
+//     * @return Collection of valid moves
+//     */
+
+    private void straightMoves(ChessBoard board, ChessPosition pos, int directions[][], int startR, int startC, Collection<ChessMove> moves) {
+        for (int[] dir : directions) {
+            int row = startR + dir[0];
+            int col = startC + dir[1];
+            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                //next is the next square and atMove is the piece(or null) on that square
+                ChessPosition next = new ChessPosition(row, col);
+                ChessPiece atMove = board.getPiece(next);
+
+                if (atMove == null) {
+                    moves.add(new ChessMove(pos, next, null));
+                } else {
+                    if (atMove.getTeamColor() != this.pieceColor) {
+                        moves.add(new ChessMove(pos, next, null));
+                    }
+                    break;//if it is blocked
+                }
+
+                row += dir[0];
+                col += dir[1];
+            }
+        }
+    }
     //returns all moves that a piece can make
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>(); //this collects the legal places a move can be made
