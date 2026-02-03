@@ -44,8 +44,8 @@ public class ChessPosition {
     public boolean equals(Object obj) {
         if (this == obj) return true; //Chekcs if they are the same object returns true if true
         if (obj == null || getClass() != obj.getClass()) return false; //if null or not a position returns false
-        ChessPosition gurt = (ChessPosition) obj; // casts obj to chess position
-        return row == gurt.row && col == gurt.col; // Returns true when row and col numbers are the same meaning same square
+        ChessPosition other = (ChessPosition) obj; // casts obj to chess position
+        return row == other.row && col == other.col; // Returns true when row and col numbers are the same meaning same square
     }
 
 }
