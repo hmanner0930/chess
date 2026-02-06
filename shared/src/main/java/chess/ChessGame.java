@@ -208,7 +208,24 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if(isInCheck(teamColor)){
+            return false;
+        }
+        for(int row = 1; row<=8; row++){
+            for(int col = 1; col<=8; col++){
+                ChessPosition pos = new ChessPosition(row,col);
+                ChessPiece piece = board.getPiece(pos);
+                if(piece == null || piece.getTeamColor() != teamColor){
+                    continue;
+                }
+
+                Collection<ChessMove> moves = validMoves(pos);
+                if(moves != null && !moves.isEmpty()){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -227,5 +244,24 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    @Override
+    public int hashCode(){
+        int result = 17;
+        result = 31 * result + (teamTurn != null ? teamTurn.hashCode(): 0);
+        result = 31 * result + (board != null ? board.hashCode(): 0);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if(this == obj) return true;
+        if(obj == null || getClass() != obj.getClass()) return false;
+        ChessGame other = (ChessGame) obj;
+        if(this.teamTurn != other.teamTurn) return false;
+        if(this.board == null && other.board == null) return true;
+        if(this.board == null || other.board == null) return false;
+        return this.board.equals(other.board);
     }
 }
