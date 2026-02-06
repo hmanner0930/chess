@@ -9,10 +9,10 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
-    private ChessBoard board;
-    private ChessGame.TeamColor teamTurn;
+    private ChessBoard board; //Current state of the board
+    private ChessGame.TeamColor teamTurn; //turn of black or white
     public ChessGame() {
-        this.board = new ChessBoard();
+        this.board = new ChessBoard(); //board created white goes first
         this.board.resetBoard();
         this.teamTurn = TeamColor.WHITE;
     }
@@ -21,7 +21,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {return teamTurn;}
-
+    //getter for the turn
     /**
      * Set's which teams turn it is
      *
@@ -30,7 +30,7 @@ public class ChessGame {
     public void setTeamTurn(TeamColor team) {
         this.teamTurn = team;
     }
-
+    //setter for team turn
     /**
      * Enum identifying the 2 possible teams in a chess game
      */
@@ -38,7 +38,7 @@ public class ChessGame {
         WHITE,
         BLACK
     }
-
+    //two colors in chess IDK exactly why enum
     /**
      * Gets a valid moves for a piece at the given location
 //     *
@@ -46,7 +46,9 @@ public class ChessGame {
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
      */
-
+    //creates a copy of the board like making a move temporarily but then see if king in check
+    //If king in check go back on the move
+    //Goes through every square copying every current piece
     private ChessBoard copyBoard(ChessBoard src){
         ChessBoard copy = new ChessBoard();
         for(int row = 1; row<=8; row++){
@@ -60,15 +62,17 @@ public class ChessGame {
         }
         return copy;
     }
-
+    //this returns the legal moves for a piece
+    //gets all the moves legal or not; does this by copying the board, applying the move, swapping board with copy
+    //then checks if moving team in check then goes back to the original board
+    //keeps moves that don't put king in check
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if(piece==null) return null;
-        Collection<ChessMove> rawM = piece.pieceMoves(board,startPosition);
+        Collection<ChessMove> allM = piece.pieceMoves(board,startPosition);
         Collection<ChessMove> legalM = new java.util.ArrayList<>();
         TeamColor team = piece.getTeamColor();
 
-        for(ChessMove move: rawM){
+        for(ChessMove move: allM){
             ChessBoard temp = copyBoard(this.board);
             ChessPosition from = move.getStartPosition();
             ChessPosition to = move.getEndPosition();
@@ -98,10 +102,12 @@ public class ChessGame {
      * @param move chess move to perform
      * @throws InvalidMoveException if move is invalid
      */
+    //Does a move only if it is legal
+    //the piece has to exist at the starting place
+    //has to be the correct player's turn and the move has to be in valid moves.
+    //later on if the pawn promotes replace with new piece
+    //it removes piece from the startPosition and places piece at the endPosition then switches turns
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        if(move == null){
-            throw new InvalidMoveException("Not this");
-        }
         ChessPosition start = move.getStartPosition();
         ChessPosition end  = move.getEndPosition();
         ChessPiece piece = board.getPiece(start);
@@ -135,6 +141,10 @@ public class ChessGame {
 //     * @paramwhich team to check for check
 //     * @return True if the specified team is in check
 //     */
+
+    //Finds the king's position
+    //scans board looking for king
+    //then returns its position
     private ChessPosition findKing(TeamColor team){
         for (int row = 1; row<= 8; row++){
             for(int col = 1; col<=8; col++){
@@ -147,13 +157,15 @@ public class ChessGame {
         }
         return null;
     }
+
+    //Finds the king
+    //Goes through all the enemy pieces
+    //Gets possible moves
+    //If any move has the king is it check
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKing(teamColor);
-        if(kingPosition==null){
-            return false;
-        }
-
         TeamColor enemy;
+
         if(teamColor == TeamColor.WHITE){
             enemy = TeamColor.BLACK;
         } else {
@@ -184,6 +196,11 @@ public class ChessGame {
      * @param teamColor which team to check for checkmate
      * @return True if the specified team is in checkmate
      */
+
+    //In check and has no valid moves
+    //obviously not in check not checkmate
+    //For every piece on team get their valid moves and if any are possible to escape check then not checkmate
+    //all those fail it is checkmate
     public boolean isInCheckmate(TeamColor teamColor) {
         if(!isInCheck(teamColor)){
             return false;
@@ -211,6 +228,8 @@ public class ChessGame {
      * @param teamColor which team to check for stalemate
      * @return True if the specified team is in stalemate, otherwise false
      */
+
+    //Same logic as isInCheckmate but it is not in check
     public boolean isInStalemate(TeamColor teamColor) {
         if(isInCheck(teamColor)){
             return false;
@@ -218,13 +237,13 @@ public class ChessGame {
 
         for(int row = 1; row<=8; row++){
             for(int col = 1; col<=8; col++){
-                ChessPosition pos = new ChessPosition(row,col);
-                ChessPiece piece = board.getPiece(pos);
+                ChessPosition position = new ChessPosition(row,col);
+                ChessPiece piece = board.getPiece(position);
                 if(piece == null || piece.getTeamColor() != teamColor){
                     continue;
                 }
 
-                Collection<ChessMove> moves = validMoves(pos);
+                Collection<ChessMove> moves = validMoves(position);
                 if(moves != null && !moves.isEmpty()){
                     return false;
                 }
@@ -238,10 +257,12 @@ public class ChessGame {
      *
      * @param board the new board to use
      */
+
+    //
     public void setBoard(ChessBoard board) {
         this.board = board;
     }
-
+    //setter for board
     /**
      * Gets the current chessboard
      *
@@ -250,12 +271,14 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return board;
     }
+    //getter for board
 
     @Override
     public int hashCode(){
        return java.util.Objects.hash(teamTurn,board);
     }
 
+    //Two ChessGame objects are equal if same team's turn and they have the same board
     @Override
     public boolean equals(Object obj){
         if(this == obj) return true;
