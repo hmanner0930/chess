@@ -215,6 +215,7 @@ public class ChessGame {
         if(isInCheck(teamColor)){
             return false;
         }
+
         for(int row = 1; row<=8; row++){
             for(int col = 1; col<=8; col++){
                 ChessPosition pos = new ChessPosition(row,col);
@@ -252,20 +253,13 @@ public class ChessGame {
 
     @Override
     public int hashCode(){
-        int result = 17;
-        result = 31 * result + (teamTurn != null ? teamTurn.hashCode(): 0);
-        result = 31 * result + (board != null ? board.hashCode(): 0);
-        return result;
+       return java.util.Objects.hash(teamTurn,board);
     }
 
     @Override
     public boolean equals(Object obj){
         if(this == obj) return true;
-        if(obj == null || getClass() != obj.getClass()) return false;
-        ChessGame other = (ChessGame) obj;
-        if(this.teamTurn != other.teamTurn) return false;
-        if(this.board == null && other.board == null) return true;
-        if(this.board == null || other.board == null) return false;
-        return this.board.equals(other.board);
+        if(!(obj instanceof ChessGame other)) return false;
+        return teamTurn == other.teamTurn && java.util.Objects.equals(board,other.board);
     }
 }
