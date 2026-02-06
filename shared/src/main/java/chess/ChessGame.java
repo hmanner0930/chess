@@ -41,13 +41,53 @@ public class ChessGame {
 
     /**
      * Gets a valid moves for a piece at the given location
-     *
-     * @param startPosition the piece to get valid moves for
+//     *
+//     * @param startPosition the piece to get valid moves for
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
      */
+
+    private ChessBoard copyBoard(ChessBoard src){
+        ChessBoard copy = new ChessBoard();
+        for(int row = 1; row<=8; row++){
+            for(int col=1;col<=8; col++){
+                ChessPosition pos =new ChessPosition(row,col);
+                ChessPiece piece = src.getPiece(pos);
+                if(piece != null){
+                    copy.addPiece(pos,new ChessPiece(piece.getTeamColor(), piece.getPieceType()));
+                }
+            }
+        }
+        return copy;
+    }
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+        if(piece==null) return null;
+        Collection<ChessMove> rawM = piece.pieceMoves(board,startPosition);
+        Collection<ChessMove> legalM = new java.util.ArrayList<>();
+        TeamColor team = piece.getTeamColor();
+        for(ChessMove move: rawM){
+            ChessBoard temp = copyBoard(this.board);
+            ChessPosition from = move.getStartPosition();
+            ChessPosition to = move.getEndPosition();
+            ChessPiece movingP = temp.getPiece(from);
+            temp.addPiece(from,null);
+            ChessPiece piecePlace = movingP;
+
+            if(move.getPromotionPiece() != null){
+                piecePlace = new ChessPiece(team, move.getPromotionPiece());
+            }
+            temp.addPiece(to,piecePlace);
+            ChessBoard original = this.board;
+            this.board = temp;
+            boolean inCheck = isInCheck(team);
+            this.board = original;
+
+            if(!inCheck){
+                legalM.add(move);
+            }
+        }
+        return legalM;
     }
 
     /**
