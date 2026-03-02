@@ -17,7 +17,7 @@ public class UserService {
         if(userDAO.getUser(reg.username()) != null){
             throw new DataAccessException(("Error"));
         }
-        userDAO.insertUser(new UserData(reg.username(), reg.password(), reg.email()));
+        userDAO.createUser(new UserData(reg.username(), reg.password(), reg.email()));
         String token = UUID.randomUUID().toString(); //
         authDAO.createAuth(new AuthData(token, reg.username()));
         return new RegisterResult(reg.username(), token);
