@@ -126,13 +126,11 @@ public class ChessPiece {
                     } else {
                         moves.add(new ChessMove(myPosition,oneFor,null));
                     }
-                    if (startRow == startRDOUBLE){
                         int twoOnRow = startRow + 2 * direct;
                         ChessPosition twoFor = new ChessPosition(twoOnRow, startCol);
-                        if (board.getPiece(twoFor) == null){
+                        if (startRow == startRDOUBLE && board.getPiece(twoFor) == null){
                             moves.add(new ChessMove(myPosition,twoFor,null));
                         }
-                    }
                 }
             }
         int[] capture = {startCol -1, startCol +1};
