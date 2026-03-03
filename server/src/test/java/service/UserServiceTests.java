@@ -1,47 +1,63 @@
 package service;
 
 import dataaccess.*;
-import model.*;
+import model.AuthData;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTests {
+
     private UserDAO userDAO;
     private AuthDAO authDAO;
+    private GameDAO gameDAO;
     private UserService service;
+    private ClearService clearService;
 
     @BeforeEach
     public void setup() {
-        // Initialize your memory DAOs and Service before every test
+        // Use your Memory versions for testing
         userDAO = new MemoryUserDAO();
-        authDAO = new MemoryAuthDAO(); // Make sure you have this implemented!
+        authDAO = new MemoryAuthDAO();
+        gameDAO = new MemoryGameDAO();
+
         service = new UserService(userDAO, authDAO);
+        clearService = new ClearService(userDAO, authDAO, gameDAO);
+
+        // Ensure a clean state before every test
+        try {
+            clearService.clear();
+        } catch (DataAccessException e) {
+            fail("Clear failed during setup");
+        }
     }
 
     @Test
-    @DisplayName("Register Success")
-    public void registerPositive() throws DataAccessException {
-        RegisterRequest request = new RegisterRequest("NewUser", "password123", "email@test.com");
+    @DisplayName("Register Success (Positive)")
+    public void registerSuccess() throws DataAccessException {
+        RegisterRequest request = new RegisterRequest("player1", "password", "p1@email.com");
         RegisterResult result = service.register(request);
 
-        assertNotNull(result.authToken());
-        assertEquals("NewUser", result.username());
+        assertNotNull(result.authToken(), "Auth token should be generated");
+        assertEquals("player1", result.username());
+
+        // Verify it's actually in the DAO
+        AuthData auth = authDAO.getAuth(result.authToken());
+        assertNotNull(auth, "AuthData should exist in DAO");
     }
 
     @Test
-    @DisplayName("Register Fail - User Already Exists")
-    public void registerNegative() throws DataAccessException {
-        RegisterRequest request = new RegisterRequest("ExistingUser", "password", "e@mail.com");
+    @DisplayName("Register Duplicate User (Negative)")
+    public void registerDuplicate() throws DataAccessException {
+        RegisterRequest request = new RegisterRequest("player1", "password", "p1@email.com");
 
-        // Register the user the first time
+        // First registration
         service.register(request);
 
-        // Try to register the same user again; it should throw an exception
+        // Second registration with same username should throw exception
         DataAccessException exception = assertThrows(DataAccessException.class, () -> {
             service.register(request);
         });
 
-        // Verify the error message matches your logic from Step 3
-        assertEquals("Error: already taken", exception.getMessage());
+        assertTrue(exception.getMessage().contains("already taken"), "Should return 'already taken' error");
     }
 }

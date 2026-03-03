@@ -18,27 +18,28 @@ public class GameService {
     }
     public int createGame(String authToken, String gameName) throws DataAccessException {
        verifyAuth(authToken);
-       if(gameName == null || gameName.isEmpty()) throw new DataAccessException("Error");
+       if(gameName == null || gameName.isEmpty()) {throw new DataAccessException("Error: bad request");}
        return gameDAO.createGame(new GameData(0,null,null, gameName, new ChessGame()));
     }
     public void joinGame(String authToken, String playerColor, int gameID) throws DataAccessException {
         AuthData auth = verifyAuth(authToken);
         GameData game = gameDAO.getGame(gameID);
 
-        if (game == null) throw new DataAccessException("Error: bad request");
-
+        if (game == null) {throw new DataAccessException("Error: bad request");}
+        if (playerColor == null || (!playerColor.equals("WHITE") && !playerColor.equals("BLACK"))) {
+            throw new DataAccessException("Error: bad request");
+        }
         String white = game.whiteUsername();
         String black = game.blackUsername();
 
-       if(playerColor != null){
            if(playerColor.equals("WHITE")){
-               if(white != null) throw new DataAccessException("Error");
+               if(white != null) {throw new DataAccessException("Error: already taken");}
                white = auth.username();
-           } else if (playerColor.equals("BLACK")) {
-               if (black != null) throw new DataAccessException("Error");
+           } else {
+               if (black != null) {throw new DataAccessException("Error: already taken");}
                black = auth.username();
            }
-       }
+
        gameDAO.updateGame(new GameData(gameID, white, black, game.gameName(), game.game()));
     }
     private AuthData verifyAuth(String authToken) throws DataAccessException {
