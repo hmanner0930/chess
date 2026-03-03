@@ -37,13 +37,13 @@ public class Server {
         UserService userService = new UserService(userDAO, authDAO);
         GameService gameService = new GameService(gameDAO, authDAO);
 
-        javalin.delete("/db", new ClearHandler(clearService)::handle);
-        javalin.post("/user", new UserHandler(userService)::register);
-        javalin.post("/session", new UserHandler(userService)::login);
-        javalin.delete("/session", new UserHandler(userService)::logout);
-        javalin.get("/game", new GameHandler(gameService)::listGames);
-        javalin.post("/game", new GameHandler(gameService)::createGame);
-        javalin.put("/game", new GameHandler(gameService)::joinGame);
+        javalin.delete("/db", ctx -> new ClearHandler(clearService).handle(ctx));
+        javalin.post("/user", ctx -> new UserHandler(userService).register(ctx));
+        javalin.post("/session", ctx -> new UserHandler(userService).login(ctx));
+        javalin.delete("/session", ctx -> new UserHandler(userService).logout(ctx));
+        javalin.get("/game", ctx -> new GameHandler(gameService).listGames(ctx));
+        javalin.post("/game", ctx -> new GameHandler(gameService).createGame(ctx));
+        javalin.put("/game", ctx -> new GameHandler(gameService).joinGame(ctx));
     }
 
     private int status(DataAccessException except){

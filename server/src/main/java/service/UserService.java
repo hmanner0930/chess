@@ -13,40 +13,38 @@ public class UserService {
         this.userDAO = userDAO;
     }
 
-    public RegisterResult register(RegisterRequest req) throws DataAccessException {
-        // Check for missing fields (400 Bad Request)
-        if(req.username() == null || req.password() == null || req.email() == null || req.username().isEmpty()){
+    public RegisterResult register(RegisterRequest request) throws DataAccessException {
+
+        if(request.username() == null || request.password() == null || request.email() == null){
             throw new DataAccessException("Error: bad request");
         }
-        if(userDAO.getUser(req.username()) != null){
+        if(userDAO.getUser(request.username()) != null){
             throw new DataAccessException("Error: already taken");
         }
 
-        userDAO.createUser(new UserData(req.username(), req.password(), req.email()));
+        userDAO.createUser(new UserData(request.username(), request.password(), request.email()));
         String token = UUID.randomUUID().toString();
-        authDAO.createAuth(new AuthData(token, req.username()));
-        return new RegisterResult(req.username(), token);
+        authDAO.createAuth(new AuthData(token, request.username()));
+        return new RegisterResult(request.username(), token);
     }
 
-    public RegisterResult login(LoginRequest req) throws DataAccessException {
-        // Check for missing fields (400 Bad Request)
-        if (req.username() == null || req.password() == null) {
+    public RegisterResult login(LoginRequest request) throws DataAccessException {
+        if (request.username() == null || request.password() == null) {
             throw new DataAccessException("Error: bad request");
         }
 
-        UserData user = userDAO.getUser(req.username());
-        // Check credentials (401 Unauthorized)
-        if(user == null || !user.password().equals(req.password())){
+        UserData user = userDAO.getUser(request.username());
+        if(user == null || !user.password().equals(request.password())){
             throw new DataAccessException("Error: unauthorized");
         }
 
         String token = UUID.randomUUID().toString();
-        authDAO.createAuth(new AuthData(token, req.username()));
-        return new RegisterResult(req.username(), token);
+        authDAO.createAuth(new AuthData(token, request.username()));
+        return new RegisterResult(request.username(), token);
     }
 
     public void logout(String authToken) throws DataAccessException {
-        if(authToken == null || authDAO.getAuth(authToken) == null){
+        if(authDAO.getAuth(authToken) == null){
             throw new DataAccessException("Error: unauthorized");
         }
         authDAO.deleteAuth(authToken);
