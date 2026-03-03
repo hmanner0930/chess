@@ -40,9 +40,11 @@ public class GameServiceTests {
     @Test
     @DisplayName("List_Games_Success")
     public void listGamesSuccess() throws DataAccessException {
-        int gameID = gameService.createGame(existingAuth, "Join");
-        gameService.joinGame(existingAuth, "WHITE", gameID);
-        Assertions.assertEquals("player1", gameDAO.getGame(gameID).whiteUsername());
+        gameService.createGame(existingAuth, "game 1");
+        gameService.createGame(existingAuth, "game 2");
+
+        Collection<GameData> games = gameService.listGames(existingAuth);
+        Assertions.assertEquals(2, games.size());
     }
 
     @Test
