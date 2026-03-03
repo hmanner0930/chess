@@ -104,14 +104,12 @@ public class ChessPiece {
                 if(row < 1 || row > 8 || col <1 || col > 8){
                     continue;
                 }
-
                 ChessPosition next = new ChessPosition(row,col);
                 ChessPiece atNext = board.getPiece(next);
                 if (atNext == null || atNext.getTeamColor() != this.pieceColor){
                     moves.add(new ChessMove(myPosition,next,null));
                 }
             }
-
             for (int[] direct : straightDirections){
                 int row = startRow + direct[0];
                 int col = startCol + direct[1];
@@ -119,7 +117,6 @@ public class ChessPiece {
                 if(row < 1 || row > 8 || col <1 || col > 8){
                     continue;
                 }
-
                 ChessPosition next = new ChessPosition(row,col);
                 ChessPiece atMove = board.getPiece(next);
 
@@ -128,7 +125,6 @@ public class ChessPiece {
                 }
             }
         }
-
         if(type == PieceType.KNIGHT){
             for(int[] set: knightMoves){
                 int row = startRow + set[0];
@@ -137,21 +133,17 @@ public class ChessPiece {
                 if (row < 1 || row > 8 || col < 1 || col > 8) {
                     continue;
                 }
-
                 ChessPosition next = new ChessPosition(row, col);
                 ChessPiece atMove = board.getPiece(next);
-
                 if (atMove == null || atMove.getTeamColor() != this.pieceColor) {
                     moves.add(new ChessMove(myPosition, next, null));
                 }
             }
         }
-
         if(type == PieceType.PAWN){
             int direct;
             int startRDOUBLE;
             int promotionR;
-
             if(pieceColor == ChessGame.TeamColor.WHITE){
                 direct =1;
                 startRDOUBLE = 2;
@@ -162,29 +154,24 @@ public class ChessPiece {
                 promotionR = 1;
 
             }
-
             int stepOnRow = startRow + direct;
             if (stepOnRow >= 1 &&  stepOnRow <=8){
                 ChessPosition oneFor = new ChessPosition(stepOnRow, startCol);
                 if (board.getPiece(oneFor) == null){
-
                     if(stepOnRow == promotionR){
                         pawnPromotion(myPosition, oneFor, moves);
                     } else {
                         moves.add(new ChessMove(myPosition,oneFor,null));
                     }
-
                     if (startRow == startRDOUBLE){
                         int twoOnRow = startRow + 2 * direct;
                         ChessPosition twoFor = new ChessPosition(twoOnRow, startCol);
-
                         if (board.getPiece(twoFor) == null){
                             moves.add(new ChessMove(myPosition,twoFor,null));
                         }
                     }
                 }
             }
-
         int[] capture = {startCol -1, startCol +1};
             for(int column: capture){
                 int row = startRow+ direct;
@@ -203,7 +190,6 @@ public class ChessPiece {
                 }
             }
         }
-
         if(type == PieceType.QUEEN){
             straightMoves(board,myPosition, straightDirections, startRow, startCol, moves);
             straightMoves(board, myPosition, diagonalDirections, startRow, startCol, moves);
