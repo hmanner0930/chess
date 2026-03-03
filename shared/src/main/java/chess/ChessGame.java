@@ -142,45 +142,26 @@ public class ChessGame {
     }
 
     public boolean isInCheckmate(TeamColor teamColor) {
-        if(!isInCheck(teamColor)){
-            return false;
-        }
-        for(int row =1; row <=8; row++){
-            for(int col = 1; col<=8; col++){
-                ChessPosition position = new ChessPosition(row,col);
-                ChessPiece piece = board.getPiece(position);
-                if(piece==null ||piece.getTeamColor() != teamColor){
-                    continue;
-                }
-                Collection<ChessMove> moves = validMoves(position);
-                if(moves != null && !moves.isEmpty()){
-                    return false;
-                }
-            }
-        }
-        return true;
+         return isInCheck(teamColor) && !validMovesCheck(teamColor);
     }
 
     public boolean isInStalemate(TeamColor teamColor) {
-        if(isInCheck(teamColor)){
-            return false;
-        }
-
-        for(int row = 1; row<=8; row++){
-            for(int col = 1; col<=8; col++){
-                ChessPosition position = new ChessPosition(row,col);
+       return !isInCheck(teamColor) && !validMovesCheck(teamColor);
+    }
+    private boolean validMovesCheck(TeamColor teamColor){
+        for (int row = 1; row <= BOARD_SIZE; row++){
+            for (int col = 1; col<= BOARD_SIZE; col++){
+                ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
-                if(piece == null || piece.getTeamColor() != teamColor){
-                    continue;
-                }
-
-                Collection<ChessMove> moves = validMoves(position);
-                if(moves != null && !moves.isEmpty()){
-                    return false;
+                if(piece != null && piece.getTeamColor() == teamColor){
+                    Collection<ChessMove> moves = validMoves(position);
+                    if(moves != null && !moves.isEmpty()){
+                        return true;
+                    }
                 }
             }
         }
-        return true;
+        return false;
     }
 
     public void setBoard(ChessBoard board) {

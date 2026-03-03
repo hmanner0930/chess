@@ -64,10 +64,10 @@ public class ChessBoard {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ChessBoard other = (ChessBoard) o;
+    public boolean equals(Object object) {
+        if (this == object) {return true;}
+        if (object == null || getClass() != object.getClass()) {return false;}
+        ChessBoard other = (ChessBoard) object;
         return Arrays.deepEquals(this.board, other.board);
     }
 }
