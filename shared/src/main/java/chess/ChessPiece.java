@@ -65,45 +65,15 @@ public class ChessPiece {
         Collection<ChessMove> moves = new ArrayList<>();
         int startRow = myPosition.getRow();
         int startCol = myPosition.getColumn();
-
-        int[][] diagonalDirections = {
-                {1,1},
-                {1,-1},
-                {-1,1},
-                {-1,-1}
-        };
-
-        int [][] straightDirections = {
-                {1,0},
-                {0,1},
-                {-1,0},
-                {0,-1},
-        };
-
-        int [][] knightMoves = {
-                {2,1},
-                {2,-1},
-                {-2,1},
-                {-2,-1},
-                {1,2},
-                {1,-2},
-                {-1,2},
-                {-1,-2}
-        };
-
-        if(type == PieceType.BISHOP) {
-            straightMoves(board, myPosition, diagonalDirections, startRow, startCol, moves);
-        }
-
+        int[][] diagonalDirections = { {1,1}, {1,-1}, {-1,1}, {-1,-1} };
+        int [][] straightDirections = { {1,0}, {0,1}, {-1,0}, {0,-1} };
+        int [][] knightMoves = { {2,1}, {2,-1}, {-2,1}, {-2,-1}, {1,2}, {1,-2}, {-1,2}, {-1,-2} };
+        
         if(type == PieceType.KING){
-
             for(int[] direct : diagonalDirections){
                 int row = startRow + direct[0];
                 int col = startCol + direct[1];
-
-                if(row < 1 || row > 8 || col <1 || col > 8){
-                    continue;
-                }
+                if(row < 1 || row > 8 || col <1 || col > 8) {continue;}
                 ChessPosition next = new ChessPosition(row,col);
                 ChessPiece atNext = board.getPiece(next);
                 if (atNext == null || atNext.getTeamColor() != this.pieceColor){
@@ -113,13 +83,9 @@ public class ChessPiece {
             for (int[] direct : straightDirections){
                 int row = startRow + direct[0];
                 int col = startCol + direct[1];
-
-                if(row < 1 || row > 8 || col <1 || col > 8){
-                    continue;
-                }
+                if(row < 1 || row > 8 || col <1 || col > 8) {continue;}
                 ChessPosition next = new ChessPosition(row,col);
                 ChessPiece atMove = board.getPiece(next);
-
                 if (atMove == null || atMove.getTeamColor() != this.pieceColor) {
                     moves.add(new ChessMove(myPosition, next, null));
                 }
@@ -129,10 +95,7 @@ public class ChessPiece {
             for(int[] set: knightMoves){
                 int row = startRow + set[0];
                 int col = startCol + set[1];
-
-                if (row < 1 || row > 8 || col < 1 || col > 8) {
-                    continue;
-                }
+                if (row < 1 || row > 8 || col < 1 || col > 8) {continue;}
                 ChessPosition next = new ChessPosition(row, col);
                 ChessPiece atMove = board.getPiece(next);
                 if (atMove == null || atMove.getTeamColor() != this.pieceColor) {
@@ -175,12 +138,9 @@ public class ChessPiece {
         int[] capture = {startCol -1, startCol +1};
             for(int column: capture){
                 int row = startRow+ direct;
-                if (row < 1 || row > 8 || column < 1 || column > 8) {
-                    continue;
-                }
+                if (row < 1 || row > 8 || column < 1 || column > 8) {continue;}
                 ChessPosition next = new ChessPosition(row,column);
                 ChessPiece atNext = board.getPiece(next);
-
                 if(atNext != null && atNext.getTeamColor() != this.pieceColor){
                     if(row == promotionR){
                         pawnPromotion(myPosition,next,moves);
@@ -190,17 +150,14 @@ public class ChessPiece {
                 }
             }
         }
-        if(type == PieceType.QUEEN){
+        if(type == PieceType.QUEEN || type == PieceType.BISHOP){
             straightMoves(board,myPosition, straightDirections, startRow, startCol, moves);
-            straightMoves(board, myPosition, diagonalDirections, startRow, startCol, moves);
         }
-
-        if(type == PieceType.ROOK){
+        if(type == PieceType.ROOK || type == PieceType.QUEEN){
             straightMoves(board, myPosition, straightDirections, startRow, startCol,moves);
         }
         return moves;
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(pieceColor, type);
