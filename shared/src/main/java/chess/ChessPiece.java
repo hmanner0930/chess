@@ -149,7 +149,7 @@ public class ChessPiece {
             }
         }
         if(type == PieceType.QUEEN || type == PieceType.BISHOP){
-            straightMoves(board,myPosition, straightDirections, startRow, startCol, moves);
+            straightMoves(board,myPosition, diagonalDirections, startRow, startCol, moves);
         }
         if(type == PieceType.ROOK || type == PieceType.QUEEN){
             straightMoves(board, myPosition, straightDirections, startRow, startCol,moves);

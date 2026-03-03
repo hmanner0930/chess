@@ -1,34 +1,47 @@
 package dataaccess;
+
 import model.GameData;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 
 public class MemoryGameDAO implements GameDAO{
-    private final HashMap<Integer, GameData> games = new HashMap<>();
-    private int nextId = 1;
+    private final List<GameData> games = new ArrayList<>();
+    private int next = 1;
 
     @Override
     public int createGame(GameData game) {
-        GameData newGame = new GameData(nextId, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
-        games.put(nextId, newGame);
-        return nextId++;
+        GameData newGame = new GameData(next, game.whiteUsername(),
+                game.blackUsername(), game.gameName(), game.game());
+        games.add(newGame);
+        return next++;
     }
     @Override
     public GameData getGame(int gameID){
-        return games.get(gameID);
+        for (GameData game : games){
+            if(game.gameID() == gameID){
+                    return game;
+            }
+        }
+        return null;
     }
     @Override
     public Collection<GameData> listGames(){
-        return games.values();
+        return games;
     }
     @Override
-    public void updateGame(GameData game){
-        games.put(game.gameID(), game);
+    public void updateGame(GameData updateGame){
+        for(int i =0; i < games.size(); i++){
+            if(games.get(i).gameID() == updateGame.gameID()){
+                games.set(i,updateGame);
+                return;
+            }
+        }
     }
     @Override
     public void clear(){
         games.clear();
-        nextId = 1;
+        next = 1;
     }
 
 }

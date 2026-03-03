@@ -13,51 +13,25 @@ public class UserHandler {
         this.service = service;
     }
 
-    public void register(Context ctx) {
-        try {
-            RegisterRequest req = gson.fromJson(ctx.body(), RegisterRequest.class);
-            // If JSON was totally empty, GSON might return null or an empty record
-            if (req == null) {throw new DataAccessException("Error: bad request");}
-
-            RegisterResult res = service.register(req);
-            ctx.status(200);
-            ctx.json(res);
-        } catch (DataAccessException except) {
-            mapError(except, ctx);
-        }
+    public void register(Context ctx) throws DataAccessException{
+        RegisterRequest request = gson.fromJson(ctx.body(), RegisterRequest.class);
+        RegisterResult result = service.register(request);
+        ctx.status(200);
+        ctx.json(result);
     }
 
-    public void login(Context ctx) {
-        try {
-            LoginRequest req = gson.fromJson(ctx.body(), LoginRequest.class);
-            if (req == null) {throw new DataAccessException("Error: bad request");}
-
-            RegisterResult res = service.login(req);
-            ctx.status(200);
-            ctx.json(res);
-        } catch (DataAccessException except) {
-            mapError(except, ctx);
-        }
+    public void login(Context ctx) throws DataAccessException{
+        LoginRequest request = gson.fromJson(ctx.body(), LoginRequest.class);
+        RegisterResult result = service.login(request);
+        ctx.status(200);
+        ctx.json(result);
     }
 
-    public void logout(Context ctx) {
-        try {
-            String authToken = ctx.header("authorization");
-            service.logout(authToken);
-            ctx.status(200);
-            ctx.json(new Object()); // Return empty JSON object {}
-        } catch (DataAccessException e) {
-            mapError(e, ctx);
-        }
+    public void logout(Context ctx) throws DataAccessException{
+        String authToken = ctx.header("authorization");
+        service.logout(authToken);
+        ctx.status(200);
+        ctx.json(new Object());
     }
 
-    private void mapError(DataAccessException e, Context ctx) {
-        String message = e.getMessage();
-        if (message.contains("bad request")) {ctx.status(400);}
-        else if (message.contains("unauthorized")) {ctx.status(401);}
-        else if (message.contains("already taken")) {ctx.status(403);}
-        else {ctx.status(500);}
-
-        ctx.json(new ErrorResponse(message));
-    }
 }
