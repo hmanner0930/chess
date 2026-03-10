@@ -9,13 +9,53 @@ public class DatabaseManager {
     private static String dbPassword;
     private static String connectionUrl;
 
+    private final static String[] CREATE_STATEMENTS = {
+            """
+            CREATE TABLE IF NOT EXISTS user (
+              `username` varchar(255) NOT NULL,
+              `password` varchar(255) NOT NULL,
+              `email` varchar(255) NOT NULL,
+              PRIMARY KEY (`username`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS auth (
+              `authToken` varchar(255) NOT NULL,
+              `username` varchar(255) NOT NULL,
+              PRIMARY KEY (`authToken`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS game (
+              `gameID` int NOT NULL AUTO_INCREMENT,
+              `whiteUsername` varchar(255) DEFAULT NULL,
+              `blackUsername` varchar(255) DEFAULT NULL,
+              `gameName` varchar(255) NOT NULL,
+              `game` text NOT NULL,
+              PRIMARY KEY (`gameID`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """
+
+    };
+
     /*
      * Load the database information for the db.properties file.
      */
     static {
         loadPropertiesFromResources();
     }
-
+    public static void configureDatabase() throws DataAccessException{
+        createDatabase();
+        try (var conn = getConnection()){
+            for(var statement : CREATE_STATEMENTS){
+                try(var preparedStatement = conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException ex){
+            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage(), ex));
+        }
+    }
     /**
      * Creates the database if it does not already exist.
      */
