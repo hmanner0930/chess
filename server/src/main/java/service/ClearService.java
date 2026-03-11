@@ -10,9 +10,9 @@ public class ClearService {
         this.authDAO = authDAO;
         this.gameDAO = gameDAO;
     }
-    public void clear() throws DataAccessException {// Order matters if you have Foreign Keys, though TRUNCATE usually bypasses them
-        gameDAO.clear();
-        authDAO.clear();
+    public void clear() throws DataAccessException {
         userDAO.clear();
+        authDAO.clear();
+        gameDAO.clear();
     }
 }
