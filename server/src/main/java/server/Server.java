@@ -29,9 +29,9 @@ public class Server {
     }
 
     private void registerRoutes(){
-        UserDAO userDAO = new MemoryUserDAO();
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
+        UserDAO userDAO = new SqlUserDAO();
+        AuthDAO authDAO = new SqlAuthDAO();
+        GameDAO gameDAO = new SqlGameDAO();
 
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
         UserService userService = new UserService(userDAO, authDAO);
