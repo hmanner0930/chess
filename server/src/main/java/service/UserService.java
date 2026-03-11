@@ -34,7 +34,9 @@ public class UserService {
         }
 
         UserData user = userDAO.getUser(request.username());
-        if(user == null || !user.password().equals(request.password())){
+
+        // CHANGE THIS LINE: Use BCrypt.checkpw instead of .equals()
+        if(user == null || !org.mindrot.jbcrypt.BCrypt.checkpw(request.password(), user.password())){
             throw new DataAccessException("Error: unauthorized");
         }
 
