@@ -12,53 +12,51 @@ public class DatabaseManager {
     private final static String[] CREATE_STATEMENTS = {
             """
             CREATE TABLE IF NOT EXISTS user (
-              `username` varchar(255) NOT NULL,
-              `password` varchar(255) NOT NULL,
-              `email` varchar(255) NOT NULL,
-              PRIMARY KEY (`username`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+              username varchar(255) NOT NULL,
+              password varchar(255) NOT NULL,
+              email varchar(255) NOT NULL,
+              PRIMARY KEY (username)
+            )
             """,
+
             """
             CREATE TABLE IF NOT EXISTS auth (
-              `authToken` varchar(255) NOT NULL,
-              `username` varchar(255) NOT NULL,
-              PRIMARY KEY (`authToken`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+              authToken varchar(255) NOT NULL,
+              username varchar(255) NOT NULL,
+              PRIMARY KEY (authToken)
+            )
             """,
+
             """
             CREATE TABLE IF NOT EXISTS game (
-              `gameID` int NOT NULL AUTO_INCREMENT,
-              `whiteUsername` varchar(255) DEFAULT NULL,
-              `blackUsername` varchar(255) DEFAULT NULL,
-              `gameName` varchar(255) NOT NULL,
-              `game` text NOT NULL,
-              PRIMARY KEY (`gameID`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+              gameID int NOT NULL AUTO_INCREMENT,
+              whiteUsername varchar(255) DEFAULT NULL,
+              blackUsername varchar(255) DEFAULT NULL,
+              gameName varchar(255) NOT NULL,
+              game text NOT NULL,
+              PRIMARY KEY (gameID)
+            )
             """
 
     };
 
-    /*
-     * Load the database information for the db.properties file.
-     */
     static {
         loadPropertiesFromResources();
     }
+
     public static void configureDatabase() throws DataAccessException{
         createDatabase();
         try (var conn = getConnection()){
             for(var statement : CREATE_STATEMENTS){
-                try(var preparedStatement = conn.prepareStatement(statement)) {
+                try (var preparedStatement = conn.prepareStatement(statement)) {
                     preparedStatement.executeUpdate();
                 }
             }
         } catch (SQLException ex){
-            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage(), ex));
+            throw new DataAccessException("failed to configure database", ex);
         }
     }
-    /**
-     * Creates the database if it does not already exist.
-     */
+
     static public void createDatabase() throws DataAccessException {
         var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
         try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
@@ -69,21 +67,8 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Create a connection to the database and sets the catalog based upon the
-     * properties specified in db.properties. Connections to the database should
-     * be short-lived, and you must close the connection when you are done with it.
-     * The easiest way to do that is with a try-with-resource block.
-     * <br/>
-     * <code>
-     * try (var conn = DatabaseManager.getConnection()) {
-     * // execute SQL statements.
-     * }
-     * </code>
-     */
     static Connection getConnection() throws DataAccessException {
         try {
-            //do not wrap the following line with a try-with-resources
             var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
             conn.setCatalog(databaseName);
             return conn;
@@ -109,7 +94,6 @@ public class DatabaseManager {
         databaseName = props.getProperty("db.name");
         dbUsername = props.getProperty("db.user");
         dbPassword = props.getProperty("db.password");
-
         var host = props.getProperty("db.host");
         var port = Integer.parseInt(props.getProperty("db.port"));
         connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
