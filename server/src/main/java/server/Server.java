@@ -20,6 +20,7 @@ public class Server {
         registerRoutes();
     }
 
+
     private Javalin createServer(){
         return Javalin.create(config -> {
             config.staticFiles.add("web");
