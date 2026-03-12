@@ -9,12 +9,18 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        this.javalin = createServ();
+        try {
+            DatabaseManager.configureDatabase();
+        } catch (DataAccessException ex) {
+            System.err.println("Error configuring database: " + ex.getMessage());
+        }
+
+        this.javalin = createServer();
         registerHandlers();
         registerRoutes();
     }
 
-    private Javalin createServ(){
+    private Javalin createServer(){
         return Javalin.create(config -> {
             config.staticFiles.add("web");
             config.jsonMapper(new JavalinGson());
