@@ -9,28 +9,29 @@ public class SqlUserDAO implements UserDAO{
         String hashedPassword = BCrypt.hashpw(user.password(), BCrypt.gensalt());
         String sql = "Insert INTO user (username, password, email) VALUES (?, ?, ?)";
         try(var conn = DatabaseManager.getConnection()){
-            try(var ps = conn.prepareStatement(sql)){
-                ps.setString(1, user.username());
-                ps.setString(2, hashedPassword);
-                ps.setString(3, user.email());
-                ps.executeUpdate();
+            try(var preparedStatement = conn.prepareStatement(sql)){
+                preparedStatement.setString(1, user.username());
+                preparedStatement.setString(2, hashedPassword);
+                preparedStatement.setString(3, user.email());
+                preparedStatement.executeUpdate();
             }
-        } catch (SQLException e){
-            throw new DataAccessException(e.getMessage());
+        } catch (SQLException ex){
+            throw new DataAccessException("failed to create user", ex);
         }
     }
 
     public UserData getUser(String username) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-            var ps = conn.prepareStatement("SELECT username, password, email FROM user WHERE username=?");
-            ps.setString(1, username);
-            try (var rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new UserData(rs.getString(1), rs.getString(2), rs.getString(3));
+            var preparedStatement = conn.prepareStatement("SELECT username, password, email FROM user WHERE username=?");
+            preparedStatement.setString(1, username);
+            try (var resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return new UserData(resultSet.getString(1),
+                            resultSet.getString(2), resultSet.getString(3));
                 }
             }
-        } catch (SQLException e) {
-            throw new DataAccessException(e.getMessage());
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to get user", ex);
         }
         return null;
     }
@@ -38,8 +39,8 @@ public class SqlUserDAO implements UserDAO{
     public void clear() throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
             conn.prepareStatement("TRUNCATE TABLE user").executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(e.getMessage());
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to clear", ex);
         }
     }
 }
