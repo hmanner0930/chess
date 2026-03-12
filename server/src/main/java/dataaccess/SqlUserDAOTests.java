@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SqlUserDAOTests {
     private final SqlUserDAO userDAO = new SqlUserDAO();
     private final UserData testUser = new UserData(
-            "player1", "password", "1@email.com");
+            "player", "password", "1@email.com");
 
     @BeforeEach
     void setup() throws DataAccessException {
@@ -16,7 +16,7 @@ public class SqlUserDAOTests {
     }
 
     @Test
-    @DisplayName("Create User Success (Positive)")
+    @DisplayName("Create User Success(Positive)")
     void createUserSuccess() throws DataAccessException {
         userDAO.createUser(testUser);
         UserData result = userDAO.getUser(testUser.username());
@@ -25,14 +25,14 @@ public class SqlUserDAOTests {
     }
 
     @Test
-    @DisplayName("Create User Duplicate (Negative)")
+    @DisplayName("Create User Duplicate(Negative)")
     void createUserDuplicate() throws DataAccessException {
         userDAO.createUser(testUser);
         assertThrows(DataAccessException.class, () -> userDAO.createUser(testUser));
     }
 
     @Test
-    @DisplayName("Get User Success (Positive)")
+    @DisplayName("Get User Success(Positive)")
     void getUserSuccess() throws DataAccessException {
         userDAO.createUser(testUser);
         UserData result = userDAO.getUser(testUser.username());
@@ -41,7 +41,7 @@ public class SqlUserDAOTests {
     }
 
     @Test
-    @DisplayName("Get User Not Found (Negative)")
+    @DisplayName("Get User Not Found(Negative)")
     void getUserNotFound() throws DataAccessException {
         assertNull(userDAO.getUser("random"));
     }

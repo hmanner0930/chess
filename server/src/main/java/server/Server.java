@@ -27,15 +27,12 @@ public class Server {
             ctx.status(statusCode);
 
             String message = except.getMessage();
-            // If the message doesn't already start with "Error: ", add it.
-            // This makes your code robust for Test 3!
             if (!message.startsWith("Error:")) {
                 message = "Error: " + message;
             }
 
             ctx.json(new ErrorResponse(message));
         });
-
         javalin.exception(Exception.class, (except, ctx) -> {
             ctx.status(500);
             ctx.json(new ErrorResponse("Error: " + except.getMessage()));
