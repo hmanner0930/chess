@@ -2,8 +2,11 @@ package dataaccess;
 
 import chess.ChessGame;
 import model.GameData;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Collection;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SqlGameDAOTests {
