@@ -98,13 +98,13 @@ public class ServerFacade {
 
     private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
         T response = null;
-        if (http.getContentLength() < 0) {
-            try (InputStream respBody = http.getInputStream()) {
+        try (InputStream respBody = http.getInputStream()) {
+            if (responseClass != null) {
                 InputStreamReader reader = new InputStreamReader(respBody);
-                if (responseClass != null) {
-                    response = new Gson().fromJson(reader, responseClass);
-                }
+                response = new Gson().fromJson(reader, responseClass);
             }
+        } catch (IOException e) {
+            // If there is no body to read, just return null
         }
         return response;
     }
