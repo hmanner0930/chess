@@ -10,42 +10,41 @@ public class ChessClient {
     private String authToken = null;
     private State state = State.SIGNEDOUT;
 
-    // Maps the UI number (1, 2, 3) to the actual Game ID (5829, etc.)
     private final Map<Integer, Integer> gameListCache = new HashMap<>();
 
     public ChessClient(String serverUrl) {
-        // Pass the port to your facade
         server = new ServerFacade(8080);
     }
 
     public String eval(String input) {
-        var tokens = input.toLowerCase().split(" ");
-        var cmd = (tokens.length > 0) ? tokens[0] : "help";
-        var params = Arrays.copyOfRange(tokens, 1, tokens.length);
-
-        return switch (cmd) {
-            case "login" -> login(params);
-            case "register" -> register(params);
+        String[] tokens = input.toLowerCase().split("\\s+");
+        String command;
+        if (tokens.length > 0) {
+            command = tokens[0];
+        } else {
+            command = "help";
+        }
+        return switch (command) {
+            case "login" -> login(tokens);
+            case "register" -> register(tokens);
             case "logout" -> logout();
-            case "create" -> createGame(params);
+            case "create" -> createGame(tokens);
             case "list" -> listGames();
-            case "join" -> joinGame(params);
-            case "observe" -> observeGame(params);
+            case "join" -> joinGame(tokens);
+            case "observe" -> observeGame(tokens);
             case "quit" -> "quit";
             default -> help();
         };
     }
 
-    // --- Post-Login Logic ---
-
-    public String createGame(String... params) {
+    public String createGame(String... parameters) {
         assertLoggedIn();
-        if (params.length >= 1) {
+        if (parameters.length >= 1) {
             try {
-                server.createGame(authToken, new CreateGameRequest(params[0]));
-                return "Game '" + params[0] + "' created successfully!";
-            } catch (Exception e) {
-                return e.getMessage();
+                server.createGame(authToken, new CreateGameRequest(parameters[0]));
+                return "Game '" + parameters[0] + "' created successfully.";
+            } catch (Exception except) {
+                return except.getMessage();
             }
         }
         return "Expected: <NAME>";
@@ -54,42 +53,37 @@ public class ChessClient {
     public String listGames() {
         assertLoggedIn();
         try {
-            var res = server.listGames(authToken);
+            var listResponse = server.listGames(authToken);
             gameListCache.clear();
-
-            StringBuilder sb = new StringBuilder("\nActive Games:\n");
+            StringBuilder stringThing = new StringBuilder("\nActive Games:\n");
             int i = 1;
-            for (var game : res.games()) {
+            for (var game : listResponse.games()) {
                 gameListCache.put(i, game.gameID());
-                sb.append(String.format(" %d. %s (White: %s, Black: %s)\n",
+                stringThing.append(String.format(" %d. %s (White: %s, Black: %s)\n",
                         i++, game.gameName(),
                         game.whiteUsername() != null ? game.whiteUsername() : "empty",
                         game.blackUsername() != null ? game.blackUsername() : "empty"));
             }
-            return sb.toString();
-        } catch (Exception e) {
-            return e.getMessage();
+            return stringThing.toString();
+        } catch (Exception exception) {
+            return exception.getMessage();
         }
     }
 
-    public String joinGame(String... params) {
+    public String joinGame(String... parameters) {
         assertLoggedIn();
-        if (params.length >= 2) {
+        if (parameters.length >= 2) {
             try {
-                int listNum = Integer.parseInt(params[0]);
-                String color = params[1].toUpperCase();
-
-                Integer gameID = gameListCache.get(listNum);
-                if (gameID == null) return "Invalid game number. Please run 'list' first.";
-
+                int listNumber = Integer.parseInt(parameters[0]);
+                String color = parameters[1].toUpperCase();
+                Integer gameID = gameListCache.get(listNumber);
+                if (gameID == null) return "Invalid game number. Run 'list' first.";
                 server.joinGame(authToken, new JoinGameRequest(color, gameID));
+                displayBoard(color.equals("WHITE"));
 
-                // Requirement: Draw the board upon joining
-                displayBoard(color.equalsIgnoreCase("WHITE"));
-
-                return String.format("Joined game %d as %s", listNum, color);
-            } catch (Exception e) {
-                return "Error: " + e.getMessage();
+                return String.format("Joined game %d as %s", listNumber, color);
+            } catch (Exception exception) {
+                return "Error: " + exception.getMessage();
             }
         }
         return "Expected: <ID> [WHITE|BLACK]";
@@ -99,30 +93,26 @@ public class ChessClient {
         assertLoggedIn();
         if (params.length >= 1) {
             try {
-                int listNum = Integer.parseInt(params[0]);
-                Integer gameID = gameListCache.get(listNum);
-                if (gameID == null) return "Invalid game number. Please run 'list' first.";
-
+                int listNumber = Integer.parseInt(params[0]);
+                Integer gameID = gameListCache.get(listNumber);
+                if (gameID == null) return "Invalid game number. Run 'list' first.";
                 server.joinGame(authToken, new JoinGameRequest(null, gameID));
-
-                // Requirement: Draw the board (defaulting to white view for observers)
                 displayBoard(true);
-
-                return "Observing game " + listNum;
-            } catch (Exception e) {
-                return e.getMessage();
+                return "Observing game " + listNumber;
+            } catch (Exception exception) {
+                return exception.getMessage();
             }
         }
         return "Expected: <ID>";
     }
 
-    private void displayBoard(boolean isWhiteView) {
+    private void displayBoard(boolean isWhitePerspective) {
         ChessBoard board = new ChessBoard();
-        board.resetBoard(); // Setup default pieces
+        board.resetBoard();
         System.out.println();
-        BoardDrawer.drawBoard(board, true);  // Show White Perspective
+        BoardDrawer.drawBoard(board, true);
         System.out.println();
-        BoardDrawer.drawBoard(board, false); // Show Black Perspective
+        BoardDrawer.drawBoard(board, false);
         System.out.println();
     }
 
@@ -133,36 +123,34 @@ public class ChessClient {
             state = State.SIGNEDOUT;
             gameListCache.clear();
             return "Logged out.";
-        } catch (Exception e) {
-            return e.getMessage();
+        } catch (Exception exception) {
+            return exception.getMessage();
         }
     }
 
-    // --- Auth Logic ---
-
-    public String login(String... params) {
-        if (params.length >= 2) {
+    public String login(String... parameters) {
+        if (parameters.length >= 2) {
             try {
-                var res = server.login(new RegisterRequest(params[0], params[1], null));
-                authToken = res.authToken();
+                var listResponse = server.login(new RegisterRequest(parameters[0], parameters[1], null));
+                authToken = listResponse.authToken();
                 state = State.SIGNEDIN;
-                return String.format("Logged in as %s.", params[0]);
-            } catch (Exception e) {
-                return e.getMessage();
+                return String.format("Logged in as %s.", parameters[0]);
+            } catch (Exception exception) {
+                return exception.getMessage();
             }
         }
         return "Expected: <USERNAME> <PASSWORD>";
     }
 
-    public String register(String... params) {
-        if (params.length >= 3) {
+    public String register(String... parameters) {
+        if (parameters.length >= 3) {
             try {
-                var res = server.register(new RegisterRequest(params[0], params[1], params[2]));
-                authToken = res.authToken();
+                var listResponse = server.register(new RegisterRequest(parameters[0], parameters[1], parameters[2]));
+                authToken = listResponse.authToken();
                 state = State.SIGNEDIN;
                 return "Registered and logged in.";
-            } catch (Exception e) {
-                return e.getMessage();
+            } catch (Exception exception) {
+                return exception.getMessage();
             }
         }
         return "Expected: <USERNAME> <PASSWORD> <EMAIL>";
@@ -171,26 +159,26 @@ public class ChessClient {
     public String help() {
         if (state == State.SIGNEDOUT) {
             return """
-                register <USERNAME> <PASSWORD> <EMAIL> - to create an account
-                login <USERNAME> <PASSWORD> - to play chess
-                quit - playing chess
-                help - with possible commands
+                register <USERNAME> <PASSWORD> <EMAIL> - create an account
+                login <USERNAME> <PASSWORD> - play chess
+                quit - play chess
+                help - possible commands
                 """;
         }
         return """
-                create <NAME> - a game
+                create <NAME> - game
                 list - games
-                join <ID> [WHITE|BLACK] - a game
-                observe <ID> - a game
-                logout - when you are done
-                quit - playing chess
-                help - with possible commands
+                join <ID> [WHITE|BLACK] - game
+                observe <ID> - game
+                logout - when done
+                quit - play chess
+                help - possible commands
                 """;
     }
 
     private void assertLoggedIn() {
         if (state != State.SIGNEDIN) {
-            throw new RuntimeException("You must log in first.");
+            throw new RuntimeException("Log in first.");
         }
     }
 
