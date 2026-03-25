@@ -13,24 +13,14 @@ public class ServerFacade {
         this.serverUrl = "http://localhost:" + port;
     }
 
-    // --- PRE-LOGIN METHODS ---
-
-    /**
-     * Registers a new user.
-     */
+    // Methods Here
     public RegisterResult register(RegisterRequest request) throws Exception {
         return this.makeRequest("POST", "/user", null, request, RegisterResult.class);
     }
 
-    /**
-     * Logs in an existing user.
-     * Uses RegisterRequest (email will be null) to simplify model management.
-     */
     public RegisterResult login(RegisterRequest request) throws Exception {
         return this.makeRequest("POST", "/session", null, request, RegisterResult.class);
     }
-
-    // --- POST-LOGIN METHODS ---
 
     public void logout(String authToken) throws Exception {
         this.makeRequest("DELETE", "/session", authToken, null, null);
@@ -48,49 +38,45 @@ public class ServerFacade {
         this.makeRequest("PUT", "/game", authToken, request, null);
     }
 
-    // --- ADMIN / TESTING METHODS ---
-
     public void clear() throws Exception {
         this.makeRequest("DELETE", "/db", null, null, null);
     }
 
-    // --- GENERIC HTTP HELPER ---
-
     private <T> T makeRequest(String method, String path, String authToken, Object requestBody, Class<T> responseClass) throws Exception {
         try {
+            //Full internet address
             URL url = (new URI(serverUrl + path)).toURL();
-            HttpURLConnection http = (HttpURLConnection) url.openConnection();
-            http.setRequestMethod(method);
+            HttpURLConnection httpConnect = (HttpURLConnection) url.openConnection();
+            httpConnect.setRequestMethod(method);
 
-            // Set headers
             if (authToken != null) {
-                http.addRequestProperty("authorization", authToken);
+                httpConnect.addRequestProperty("authorization", authToken);
             }
 
-            // Write body if it's not a GET request
             if (requestBody != null) {
-                http.setDoOutput(true);
-                writeBody(requestBody, http);
+                httpConnect.setDoOutput(true);
+                writeBody(requestBody, httpConnect);
             }
 
-            http.connect();
-            throwIfNotSuccessful(http);
-            return readBody(http, responseClass);
-        } catch (Exception ex) {
-            throw new Exception(ex.getMessage());
+            httpConnect.connect();
+            throwIfNotSuccessful(httpConnect);
+            return readBody(httpConnect, responseClass);
+        } catch (Exception exception) {
+            throw new Exception(exception.getMessage());
         }
     }
 
     private static void writeBody(Object requestBody, HttpURLConnection http) throws IOException {
         http.addRequestProperty("Content-Type", "application/json");
-        String reqData = new Gson().toJson(requestBody);
-        try (OutputStream reqBody = http.getOutputStream()) {
-            reqBody.write(reqData.getBytes());
+        String requestData = new Gson().toJson(requestBody);
+        try (OutputStream body = http.getOutputStream()) {
+            body.write(requestData.getBytes());
         }
     }
 
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException {
         var status = http.getResponseCode();
+        //If error not in 400s or 500s
         if (status / 100 != 2) {
             throw new IOException("Error: " + status);
         }
@@ -98,13 +84,13 @@ public class ServerFacade {
 
     private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
         T response = null;
-        try (InputStream respBody = http.getInputStream()) {
+        try (InputStream responseBody = http.getInputStream()) {
             if (responseClass != null) {
-                InputStreamReader reader = new InputStreamReader(respBody);
+                InputStreamReader reader = new InputStreamReader(responseBody);
                 response = new Gson().fromJson(reader, responseClass);
             }
-        } catch (IOException e) {
-            // If there is no body to read, just return null
+        } catch (IOException exception) {
+
         }
         return response;
     }
