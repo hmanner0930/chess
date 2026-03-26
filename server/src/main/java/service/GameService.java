@@ -32,10 +32,12 @@ public class GameService {
         AuthData auth = verifyAuth(authToken);
         GameData game = gameDAO.getGame(gameID);
 
-        if (game == null || color == null) {
+        if (game == null) {
             throw new DataAccessException("Error: bad request");
         }
-
+        if (color == null || color.isEmpty()) {
+            return;
+        }
         String white = game.whiteUsername();
         String black = game.blackUsername();
 
