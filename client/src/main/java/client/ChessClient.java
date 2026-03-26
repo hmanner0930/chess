@@ -24,14 +24,20 @@ public class ChessClient {
         } else {
             command = "help";
         }
+        String[] params;
+        if (tokens.length > 1) {
+            params = Arrays.copyOfRange(tokens, 1, tokens.length);
+        } else {
+            params = new String[0];
+        }
         return switch (command) {
-            case "login" -> login(tokens);
-            case "register" -> register(tokens);
+            case "login" -> login(params);
+            case "register" -> register(params);
             case "logout" -> logout();
-            case "create" -> createGame(tokens);
+            case "create" -> createGame(params);
             case "list" -> listGames();
-            case "join" -> joinGame(tokens);
-            case "observe" -> observeGame(tokens);
+            case "join" -> joinGame(params);
+            case "observe" -> observeGame(params);
             case "quit" -> "quit";
             default -> help();
         };
