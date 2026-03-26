@@ -7,8 +7,8 @@ public class Main {
             DatabaseManager.configureDatabase();
             Server server = new Server();
             server.run(8080);
-        } catch (Exception ex) {
-            System.err.printf(ex.getMessage());
+        } catch (Exception exception) {
+            System.err.printf(exception.getMessage());
         }
     }
 }

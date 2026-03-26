@@ -90,7 +90,10 @@ public class ChessClient {
                 displayBoard(color.equals("WHITE"));
 
                 return String.format("Joined game %d as %s", listNumber, color);
-            } catch (Exception exception) {
+            } catch (NumberFormatException exception){
+                return "Error: '" + parameters[0] + "' " +
+                        "is not a valid number.";
+            }catch (Exception exception) {
                 return "Error: " + exception.getMessage();
             }
         }
