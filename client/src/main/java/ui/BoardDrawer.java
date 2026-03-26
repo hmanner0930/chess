@@ -38,6 +38,7 @@ public class BoardDrawer {
         }
 
         for (int col = colStart; whitePerspective ? col <= colEnd : col >= colEnd; col += colStep) {
+            //For code quality you can use ternary operators inside?
             if ((row + col) % 2 == 0) {
                 System.out.print(SET_BG_COLOR_LIGHT_GREY);
             } else {
