@@ -107,13 +107,16 @@ public class ChessClient {
                 int listNumber = Integer.parseInt(params[0]);
                 Integer gameID = gameListCache.get(listNumber);
                 if (gameID == null) {
-                    return "Invalid game number. Run 'list' first.";
+                    return "Error: Game number " + listNumber + " not found. Run 'list' first.";
                 }
                 server.joinGame(authToken, new JoinGameRequest(null, gameID));
+
                 displayBoard(true);
                 return "Observing game " + listNumber;
+            } catch (NumberFormatException exception) {
+                return "Error: '" + params[0] + "' is not a valid number. ";
             } catch (Exception exception) {
-                return exception.getMessage();
+                return "Error: " + exception.getMessage();
             }
         }
         return "Expected: <ID>";
