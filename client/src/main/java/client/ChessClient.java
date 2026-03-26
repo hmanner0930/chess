@@ -77,7 +77,9 @@ public class ChessClient {
                 int listNumber = Integer.parseInt(parameters[0]);
                 String color = parameters[1].toUpperCase();
                 Integer gameID = gameListCache.get(listNumber);
-                if (gameID == null) return "Invalid game number. Run 'list' first.";
+                if (gameID == null) {
+                    return "Invalid game number. Run 'list' first.";
+                }
                 server.joinGame(authToken, new JoinGameRequest(color, gameID));
                 displayBoard(color.equals("WHITE"));
 
@@ -95,7 +97,9 @@ public class ChessClient {
             try {
                 int listNumber = Integer.parseInt(params[0]);
                 Integer gameID = gameListCache.get(listNumber);
-                if (gameID == null) return "Invalid game number. Run 'list' first.";
+                if (gameID == null) {
+                    return "Invalid game number. Run 'list' first.";
+                }
                 server.joinGame(authToken, new JoinGameRequest(null, gameID));
                 displayBoard(true);
                 return "Observing game " + listNumber;

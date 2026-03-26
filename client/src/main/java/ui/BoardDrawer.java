@@ -10,21 +10,24 @@ public class BoardDrawer {
     private static void printHeaders(boolean isWhiteView) {
         System.out.print(SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_WHITE + "    ");
         if (isWhiteView) {
-            for (int i = 0; i < 8; i++) System.out.print(HEADERS[i]);
+            for (int i = 0; i < 8; i++){ System.out.print(HEADERS[i]);
+                }
         } else {
-            for (int i = 7; i >= 0; i--) System.out.print(HEADERS[i]);
+            for (int i = 7; i >= 0; i--){
+                System.out.print(HEADERS[i]);
+            }
         }
         System.out.println("    " + RESET_BG_COLOR);
     }
 
-    private static void printRow(ChessBoard board, int row, boolean WhitePerspective) {
+    private static void printRow(ChessBoard board, int row, boolean whitePerspective) {
 
         System.out.print(SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_WHITE + " " + row + " ");
         int colStart;
         int colEnd;
         int colStep;
 
-        if (WhitePerspective) {
+        if (whitePerspective) {
             colStart = 1;
             colEnd = 8;
             colStep = 1;
@@ -34,7 +37,7 @@ public class BoardDrawer {
             colStep = -1;
         }
 
-        for (int col = colStart; WhitePerspective ? col <= colEnd : col >= colEnd; col += colStep) {
+        for (int col = colStart; whitePerspective ? col <= colEnd : col >= colEnd; col += colStep) {
             if ((row + col) % 2 == 0) {
                 System.out.print(SET_BG_COLOR_LIGHT_GREY);
             } else {
@@ -102,13 +105,13 @@ public class BoardDrawer {
         }
     }
 
-    public static void drawBoard(ChessBoard board, boolean WhitePerspective) {
-        printHeaders(WhitePerspective);
+    public static void drawBoard(ChessBoard board, boolean whitePerspective) {
+        printHeaders(whitePerspective);
 
         int rowStart;
         int rowEnd;
         int rowStep;
-        if (WhitePerspective) {
+        if (whitePerspective) {
             rowStart = 8;
             rowEnd = 1;
             rowStep = -1;
@@ -118,11 +121,11 @@ public class BoardDrawer {
             rowStep = 1;
         }
 
-        for (int row = rowStart; WhitePerspective ? row >= rowEnd : row <= rowEnd; row += rowStep) {
-            printRow(board, row, WhitePerspective);
+        for (int row = rowStart; whitePerspective ? row >= rowEnd : row <= rowEnd; row += rowStep) {
+            printRow(board, row, whitePerspective);
         }
 
-        printHeaders(WhitePerspective);
+        printHeaders(whitePerspective);
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
 }
