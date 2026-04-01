@@ -126,9 +126,7 @@ public class ChessClient {
         ChessBoard board = new ChessBoard();
         board.resetBoard();
         System.out.println();
-        BoardDrawer.drawBoard(board, true);
-        System.out.println();
-        BoardDrawer.drawBoard(board, false);
+        BoardDrawer.drawBoard(board, isWhitePerspective);
         System.out.println();
     }
 
@@ -175,17 +173,17 @@ public class ChessClient {
     public String help() {
         if (state == State.SIGNEDOUT) {
             return """
-                register <USERNAME> <PASSWORD> <EMAIL> - create an account
+                register <USERNAME> <PASSWORD> <EMAIL> - create account
                 login <USERNAME> <PASSWORD> - play chess
                 quit - play chess
                 help - possible commands
                 """;
         }
         return """
-                create <NAME> - game
-                list - games
-                join <ID> [WHITE|BLACK] - game
-                observe <ID> - game
+                create <NAME> - create game
+                list - list games
+                join <ID> [WHITE|BLACK] - join game
+                observe <ID> - observe game
                 logout - when done
                 quit - play chess
                 help - possible commands
