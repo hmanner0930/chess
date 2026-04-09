@@ -4,11 +4,21 @@ import io.javalin.Javalin;
 import io.javalin.json.JavalinGson;
 import dataaccess.*;
 import service.*;
+import websocket.WebSocketHandler;
 
 public class Server {
     private final Javalin javalin;
+    private final WebSocketHandler wsHandler;
 
     public Server() {
+        // 1. Initialize DAOs
+        UserDAO userDAO = new SqlUserDAO();
+        AuthDAO authDAO = new SqlAuthDAO();
+        GameDAO gameDAO = new SqlGameDAO();
+
+        // 2. Initialize WebSocketHandler with DAOs
+        this.wsHandler = new WebSocketHandler(gameDAO, authDAO);
+
         try {
             DatabaseManager.configureDatabase();
         } catch (DataAccessException ex) {
@@ -17,11 +27,10 @@ public class Server {
 
         this.javalin = createServer();
         registerHandlers();
-        registerRoutes();
+        registerRoutes(userDAO, authDAO, gameDAO);
     }
 
-
-    private Javalin createServer(){
+    private Javalin createServer() {
         return Javalin.create(config -> {
             config.staticFiles.add("web");
             config.jsonMapper(new JavalinGson());
@@ -32,12 +41,10 @@ public class Server {
         javalin.exception(DataAccessException.class, (except, ctx) -> {
             int statusCode = status(except);
             ctx.status(statusCode);
-
             String message = except.getMessage();
             if (!message.startsWith("Error:")) {
                 message = "Error: " + message;
             }
-
             ctx.json(new ErrorResponse(message));
         });
         javalin.exception(Exception.class, (except, ctx) -> {
@@ -46,15 +53,16 @@ public class Server {
         });
     }
 
-    private void registerRoutes(){
-        UserDAO userDAO = new SqlUserDAO();
-        AuthDAO authDAO = new SqlAuthDAO();
-        GameDAO gameDAO = new SqlGameDAO();
-
+    private void registerRoutes(UserDAO userDAO, AuthDAO authDAO, GameDAO gameDAO) {
+        // Initialize Services
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
         UserService userService = new UserService(userDAO, authDAO);
         GameService gameService = new GameService(gameDAO, authDAO);
 
+        // --- WebSocket Route ---
+        javalin.ws("/ws", wsHandler::configure);
+
+        // --- HTTP Routes ---
         javalin.delete("/db", ctx -> new ClearHandler(clearService).handle(ctx));
         javalin.post("/user", ctx -> new UserHandler(userService).register(ctx));
         javalin.post("/session", ctx -> new UserHandler(userService).login(ctx));
@@ -64,18 +72,11 @@ public class Server {
         javalin.put("/game", ctx -> new GameHandler(gameService).joinGame(ctx));
     }
 
-    private int status(DataAccessException except){
-        String message =except.getMessage().toLowerCase();
-        if (message.contains("bad request")) {
-            return 400;
-        }
-        if (message.contains("unauthorized")) {
-            return 401;
-        }
-        if (message.contains("already taken")) {
-            return 403;
-        }
-
+    private int status(DataAccessException except) {
+        String message = except.getMessage().toLowerCase();
+        if (message.contains("bad request")) return 400;
+        if (message.contains("unauthorized")) return 401;
+        if (message.contains("already taken")) return 403;
         return 500;
     }
 
