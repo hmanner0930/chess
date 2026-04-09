@@ -31,8 +31,7 @@ public class SqlGameDAO implements GameDAO {
     }
 
     public GameData getGame(int gameID) throws DataAccessException {
-        String sql = "SELECT gameID, whiteUsername, blackUsername, " +
-                "gameName, game FROM game WHERE gameID=?";
+        String sql = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM game WHERE gameID=?";
         try (var conn = DatabaseManager.getConnection();
              var preparedStatement = conn.prepareStatement(sql)) {
 
@@ -54,6 +53,9 @@ public class SqlGameDAO implements GameDAO {
         return null;
     }
 
+    /**
+     * Updates the full game data (Existing method)
+     */
     public void updateGame(GameData game) throws DataAccessException {
         String sql = "UPDATE game SET whiteUsername=?, blackUsername=?, game=? WHERE gameID=?";
         try (var conn = DatabaseManager.getConnection();
@@ -65,6 +67,37 @@ public class SqlGameDAO implements GameDAO {
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("failed to update game");
+        }
+    }
+
+    /**
+     * NEW: Overloaded updateGame to update ONLY the chess game state (Used in MAKE_MOVE)
+     */
+    public void updateGame(int gameID, ChessGame chessGame) throws DataAccessException {
+        String sql = "UPDATE game SET game=? WHERE gameID=?";
+        try (var conn = DatabaseManager.getConnection();
+             var preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, gson.toJson(chessGame));
+            preparedStatement.setInt(2, gameID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to update game state");
+        }
+    }
+
+    /**
+     * NEW: Overloaded updateGame to update player names (Used in LEAVE)
+     */
+    public void updateGame(int gameID, String whiteUsername, String blackUsername) throws DataAccessException {
+        String sql = "UPDATE game SET whiteUsername=?, blackUsername=? WHERE gameID=?";
+        try (var conn = DatabaseManager.getConnection();
+             var preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, whiteUsername);
+            preparedStatement.setString(2, blackUsername);
+            preparedStatement.setInt(3, gameID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("failed to update player names");
         }
     }
 
