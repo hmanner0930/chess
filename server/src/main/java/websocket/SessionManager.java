@@ -9,7 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SessionManager {
-    // Maps GameID -> List of Connections
+    // 1. Move the Connection class INSIDE SessionManager and make it public static
+    public static class Connection {
+        public String authToken;
+        public Session session;
+
+        public Connection(String authToken, Session session) {
+            this.authToken = authToken;
+            this.session = session;
+        }
+    }
+
     public final ConcurrentHashMap<Integer, List<Connection>> connections = new ConcurrentHashMap<>();
 
     public void add(int gameID, String authToken, Session session) {
@@ -40,18 +50,7 @@ public class SessionManager {
         }
     }
 
-    // New helper: Broadcast to EVERYONE (including the root client)
     public void broadcastToAll(int gameID, ServerMessage serverMessage) throws IOException {
         broadcast(gameID, null, serverMessage);
-    }
-}
-
-class Connection {
-    public String authToken;
-    public Session session;
-
-    public Connection(String authToken, Session session) {
-        this.authToken = authToken;
-        this.session = session;
     }
 }
