@@ -4,32 +4,29 @@ import java.util.*;
 import model.*;
 import chess.*;
 import ui.BoardDrawer;
+import websocket.ServerMessageObserver;
+import websocket.WebSocketFacade; // Added Import
+import websocket.commands.UserGameCommand; // Added for CONNECT
 
-public class ChessClient {
+public class ChessClient implements ServerMessageObserver {
     private final ServerFacade server;
+    private WebSocketFacade ws;
+    private final String serverUrl;
     private String authToken = null;
     private State state = State.SIGNEDOUT;
 
     private final Map<Integer, Integer> gameListCache = new HashMap<>();
 
     public ChessClient(String serverUrl) {
-        server = new ServerFacade(8080);
+        this.serverUrl = serverUrl; // FIX: Initialize the field
+        this.server = new ServerFacade(8080); // Ensure this matches your ServerFacade setup
     }
 
     public String eval(String input) {
         String[] tokens = input.toLowerCase().split("\\s+");
-        String command;
-        if (tokens.length > 0) {
-            command = tokens[0];
-        } else {
-            command = "help";
-        }
-        String[] params;
-        if (tokens.length > 1) {
-            params = Arrays.copyOfRange(tokens, 1, tokens.length);
-        } else {
-            params = new String[0];
-        }
+        String command = (tokens.length > 0) ? tokens[0] : "help";
+        String[] params = (tokens.length > 1) ? Arrays.copyOfRange(tokens, 1, tokens.length) : new String[0];
+
         return switch (command) {
             case "login" -> login(params);
             case "register" -> register(params);
@@ -86,14 +83,20 @@ public class ChessClient {
                 if (gameID == null) {
                     return "Invalid game number. Run 'list' first.";
                 }
+
+                // 1. HTTP Join
                 server.joinGame(authToken, new JoinGameRequest(color, gameID));
-                displayBoard(color.equals("WHITE"));
+
+                // 2. WebSocket Connect
+                if (ws == null) {
+                    ws = new WebSocketFacade(serverUrl, this);
+                }
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
 
                 return String.format("Joined game %d as %s", listNumber, color);
             } catch (NumberFormatException exception){
-                return "Error: '" + parameters[0] + "' " +
-                        "is not a valid number.";
-            }catch (Exception exception) {
+                return "Error: '" + parameters[0] + "' is not a valid number.";
+            } catch (Exception exception) {
                 return "Error: " + exception.getMessage();
             }
         }
@@ -109,9 +112,16 @@ public class ChessClient {
                 if (gameID == null) {
                     return "Error: Game number " + listNumber + " not found. Run 'list' first.";
                 }
+
+                // 1. HTTP Join
                 server.joinGame(authToken, new JoinGameRequest(null, gameID));
 
-                displayBoard(true);
+                // 2. WebSocket Connect
+                if (ws == null) {
+                    ws = new WebSocketFacade(serverUrl, this);
+                }
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
+
                 return "Observing game " + listNumber;
             } catch (NumberFormatException exception) {
                 return "Error: '" + params[0] + "' is not a valid number. ";
@@ -136,6 +146,7 @@ public class ChessClient {
             authToken = null;
             state = State.SIGNEDOUT;
             gameListCache.clear();
+            ws = null; // Reset WebSocket on logout
             return "Logged out.";
         } catch (Exception exception) {
             return exception.getMessage();
@@ -170,12 +181,39 @@ public class ChessClient {
         return "Expected: <USERNAME> <PASSWORD> <EMAIL>";
     }
 
+    @Override
+    public void notify(websocket.messages.ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                var loadMessage = (websocket.messages.LoadGameMessage) message;
+                System.out.println("\n");
+                // Uses the actual board state from the server message
+                BoardDrawer.drawBoard(loadMessage.getGame().getBoard(), true);
+                printPrompt();
+            }
+            case ERROR -> {
+                var errorMessage = (websocket.messages.ErrorMessage) message;
+                System.out.println("\n" + ui.EscapeSequences.SET_TEXT_COLOR_RED + errorMessage.getErrorMessage());
+                printPrompt();
+            }
+            case NOTIFICATION -> {
+                var notification = (websocket.messages.NotificationMessage) message;
+                System.out.println("\n" + ui.EscapeSequences.SET_TEXT_COLOR_YELLOW + notification.getMessage());
+                printPrompt();
+            }
+        }
+    }
+
+    private void printPrompt() {
+        System.out.print("\n" + ui.EscapeSequences.SET_TEXT_COLOR_WHITE + "[" + getState() + "] >>> ");
+    }
+
     public String help() {
         if (state == State.SIGNEDOUT) {
             return """
                 register <USERNAME> <PASSWORD> <EMAIL> - create account
                 login <USERNAME> <PASSWORD> - play chess
-                quit - play chess
+                quit - exit
                 help - possible commands
                 """;
         }
@@ -185,7 +223,7 @@ public class ChessClient {
                 join <ID> [WHITE|BLACK] - join game
                 observe <ID> - observe game
                 logout - when done
-                quit - play chess
+                quit - exit
                 help - possible commands
                 """;
     }
