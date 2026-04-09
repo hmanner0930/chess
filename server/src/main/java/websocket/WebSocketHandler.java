@@ -45,6 +45,7 @@ public class WebSocketHandler {
 
     private void connect(WsMessageContext ctx, UserGameCommand command) throws Exception {
         try {
+            // 1. MUST fetch these first before you can use them in debug prints!
             AuthData auth = authDAO.getAuth(command.getAuthToken());
             GameData gameData = gameDAO.getGame(command.getGameID());
 
@@ -53,10 +54,16 @@ public class WebSocketHandler {
                 return;
             }
 
+            // 2. NOW the debug prints will work because 'auth' and 'gameData' exist
+            System.out.println("[SERVER DEBUG] Preparing to send board to user: " + auth.username());
+            String json = new Gson().toJson(new LoadGameMessage(gameData.game()));
+            System.out.println("[SERVER DEBUG] JSON being sent: " + json);
+
+            // 3. Logic
             sessions.add(command.getGameID(), command.getAuthToken(), ctx.session);
 
             // Send LOAD_GAME to Root
-            ctx.send(new Gson().toJson(new LoadGameMessage(gameData.game())));
+            ctx.send(json);
 
             // Notification message logic
             String message;
@@ -71,6 +78,7 @@ public class WebSocketHandler {
             sessions.broadcast(command.getGameID(), command.getAuthToken(), new NotificationMessage(message));
 
         } catch (Exception e) {
+            System.out.println("[SERVER DEBUG] Error in connect: " + e.getMessage());
             sendError(ctx, "Error: " + e.getMessage());
         }
     }
