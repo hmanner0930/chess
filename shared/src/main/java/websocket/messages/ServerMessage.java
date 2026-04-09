@@ -9,7 +9,7 @@ import java.util.Objects;
  * methods.
  */
 public class ServerMessage {
-    ServerMessageType serverMessageType;
+    protected ServerMessageType serverMessageType;
 
     public enum ServerMessageType {
         LOAD_GAME,

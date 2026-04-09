@@ -14,12 +14,13 @@ public class ChessClient implements ServerMessageObserver {
     private final String serverUrl;
     private String authToken = null;
     private State state = State.SIGNEDOUT;
+    private ChessGame.TeamColor playerColor = null;
 
     private final Map<Integer, Integer> gameListCache = new HashMap<>();
 
     public ChessClient(String serverUrl) {
         this.serverUrl = serverUrl; // FIX: Initialize the field
-        this.server = new ServerFacade(8080);
+        this.server = new ServerFacade(serverUrl);
         // Ensure this matches your ServerFacade setup
     }
 
@@ -81,6 +82,7 @@ public class ChessClient implements ServerMessageObserver {
             try {
                 int listNumber = Integer.parseInt(parameters[0]);
                 String color = parameters[1].toUpperCase();
+                this.playerColor = color.equals("WHITE") ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
                 Integer gameID = gameListCache.get(listNumber);
 
                 if (gameID == null) {
@@ -117,6 +119,7 @@ public class ChessClient implements ServerMessageObserver {
 
     public String observeGame(String... params) {
         assertLoggedIn();
+        this.playerColor = ChessGame.TeamColor.WHITE;
         if (params.length >= 1) {
             try {
                 int listNumber = Integer.parseInt(params[0]);
@@ -191,9 +194,15 @@ public class ChessClient implements ServerMessageObserver {
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 var loadMessage = (websocket.messages.LoadGameMessage) message;
-                System.out.println("DEBUG: Board Object: " + loadMessage.getGame().getBoard()); // Check if null
-                System.out.println("\n");
-                BoardDrawer.drawBoard(loadMessage.getGame().getBoard(), true);
+                boolean isWhiteView = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
+                System.out.println("\n[DEBUG] RECEIVED LOAD_GAME MESSAGE"); // Add this
+
+                if (loadMessage.getGame() != null && loadMessage.getGame().getBoard() != null) {
+                    System.out.println("\n");
+                    BoardDrawer.drawBoard(loadMessage.getGame().getBoard(), isWhiteView);
+                } else {
+                    System.out.println("[DEBUG] Game or Board was null in the message!");
+                }
                 printPrompt();
             }
             case ERROR -> {

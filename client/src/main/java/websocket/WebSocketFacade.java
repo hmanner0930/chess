@@ -27,9 +27,24 @@ public class WebSocketFacade extends Endpoint {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
 
-            this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
-                ServerMessage serverMessage = deserialize(message);
-                observer.notify(serverMessage);
+            // Inside your MessageHandler in WebSocketFacade
+            // Inside WebSocketFacade constructor
+            this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+                @Override
+                public void onMessage(String message) {
+                    try {
+                        // This MUST be the first line
+                        System.out.println("\n[DEBUG] Raw message received by client: " + message);
+
+                        ServerMessage serverMessage = deserialize(message);
+                        if (serverMessage != null) {
+                            observer.notify(serverMessage);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("[DEBUG] Client failed to notify: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
             });
         } catch (Exception e) {
             throw new Exception("WebSocket Connection Error: " + e.getMessage());
@@ -38,7 +53,9 @@ public class WebSocketFacade extends Endpoint {
 
     // This must stay empty but is required by the Endpoint class
     @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {}
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+        System.out.println("[DEBUG] WebSocket connection opened successfully!");
+    }
 
     public void sendCommand(UserGameCommand command) throws IOException {
         this.session.getBasicRemote().sendText(new Gson().toJson(command));
