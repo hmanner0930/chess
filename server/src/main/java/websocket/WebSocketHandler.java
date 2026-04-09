@@ -121,16 +121,22 @@ public class WebSocketHandler {
         AuthData auth = authDAO.getAuth(command.getAuthToken());
         GameData gameData = gameDAO.getGame(command.getGameID());
 
-        // Update DB to remove player from their slot
-        if (auth.username().equals(gameData.whiteUsername())) {
-            gameDAO.updateGame(gameData.gameID(), null, gameData.blackUsername());
-        } else if (auth.username().equals(gameData.blackUsername())) {
-            gameDAO.updateGame(gameData.gameID(), gameData.whiteUsername(), null);
+        String whiteUser = gameData.whiteUsername();
+        String blackUser = gameData.blackUsername();
+
+        // Check which slot the leaving player occupies and set it to null
+        if (auth.username().equals(whiteUser)) {
+            whiteUser = null;
+        } else if (auth.username().equals(blackUser)) {
+            blackUser = null;
         }
+
+        // Update the DAO with the new player list (one of which is now null)
+        gameDAO.updateGame(command.getGameID(), whiteUser, blackUser);
 
         sessions.remove(command.getGameID(), command.getAuthToken());
         String msg = String.format("%s left the game", auth.username());
-        sessions.broadcast(command.getGameID(), null, new NotificationMessage(msg));
+        sessions.broadcast(command.getGameID(), command.getAuthToken(), new NotificationMessage(msg));
     }
 
     private void resign(WsMessageContext ctx, UserGameCommand command) throws Exception {

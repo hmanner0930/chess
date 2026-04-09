@@ -19,7 +19,8 @@ public class ChessClient implements ServerMessageObserver {
 
     public ChessClient(String serverUrl) {
         this.serverUrl = serverUrl; // FIX: Initialize the field
-        this.server = new ServerFacade(8080); // Ensure this matches your ServerFacade setup
+        this.server = new ServerFacade(8080);
+        // Ensure this matches your ServerFacade setup
     }
 
     public String eval(String input) {
@@ -132,14 +133,6 @@ public class ChessClient implements ServerMessageObserver {
         return "Expected: <ID>";
     }
 
-    private void displayBoard(boolean isWhitePerspective) {
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
-        System.out.println();
-        BoardDrawer.drawBoard(board, isWhitePerspective);
-        System.out.println();
-    }
-
     public String logout() {
         try {
             server.logout(authToken);
@@ -183,11 +176,12 @@ public class ChessClient implements ServerMessageObserver {
 
     @Override
     public void notify(websocket.messages.ServerMessage message) {
+        System.out.println("DEBUG: Client received a message from server: " + message.getServerMessageType());
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 var loadMessage = (websocket.messages.LoadGameMessage) message;
+                System.out.println("DEBUG: Board Object: " + loadMessage.getGame().getBoard()); // Check if null
                 System.out.println("\n");
-                // Uses the actual board state from the server message
                 BoardDrawer.drawBoard(loadMessage.getGame().getBoard(), true);
                 printPrompt();
             }

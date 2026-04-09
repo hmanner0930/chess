@@ -20,7 +20,12 @@ public class WebSocketFacade extends Endpoint {
     public WebSocketFacade(String url, ServerMessageObserver observer) throws Exception {
         try {
             url = url.replace("http", "ws");
-            URI socketURI = new URI(url + "/ws");
+            // In WebSocketFacade.java
+            url = url.replace("http", "ws");
+            if (!url.endsWith("/ws")) {
+                url = url + "/ws";
+            }
+            URI socketURI = new URI(url);
             this.observer = observer;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -28,9 +33,13 @@ public class WebSocketFacade extends Endpoint {
 
             // Set up a listener for incoming messages
             this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
-                // Turn raw JSON into the correct ServerMessage subtype
-                ServerMessage serverMessage = deserialize(message);
-                observer.notify(serverMessage);
+                System.out.println("\n[DEBUG] Raw Message from Server: " + message); // NEW PRINT
+                try {
+                    ServerMessage serverMessage = deserialize(message);
+                    this.observer.notify(serverMessage);
+                } catch (Exception e) {
+                    System.err.println("[DEBUG] Failed to process message: " + e.getMessage());
+                }
             });
         } catch (DeploymentException | URISyntaxException | IOException e) {
             throw new Exception("Failed to connect to server: " + e.getMessage());
@@ -49,7 +58,11 @@ public class WebSocketFacade extends Endpoint {
         Gson gson = new Gson();
         ServerMessage generic = gson.fromJson(json, ServerMessage.class);
 
-        // Use the ServerMessageType to return the specific subclass
+        if (generic == null || generic.getServerMessageType() == null) {
+            System.err.println("[DEBUG] Received malformed JSON: " + json);
+            return null;
+        }
+
         return switch (generic.getServerMessageType()) {
             case LOAD_GAME -> gson.fromJson(json, LoadGameMessage.class);
             case ERROR -> gson.fromJson(json, ErrorMessage.class);
