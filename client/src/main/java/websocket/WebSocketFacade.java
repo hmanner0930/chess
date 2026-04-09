@@ -19,30 +19,20 @@ public class WebSocketFacade extends Endpoint {
 
     public WebSocketFacade(String url, ServerMessageObserver observer) throws Exception {
         try {
-            url = url.replace("http", "ws");
-            // In WebSocketFacade.java
-            url = url.replace("http", "ws");
-            if (!url.endsWith("/ws")) {
-                url = url + "/ws";
-            }
-            URI socketURI = new URI(url);
-            this.observer = observer;
+            // Clean the URL: remove http/https and ensure it starts with ws
+            String cleanUrl = url.replace("http://", "").replace("https://", "");
+            URI socketURI = new URI("ws://" + cleanUrl + "/ws");
 
+            this.observer = observer;
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
 
-            // Set up a listener for incoming messages
             this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
-                System.out.println("\n[DEBUG] Raw Message from Server: " + message); // NEW PRINT
-                try {
-                    ServerMessage serverMessage = deserialize(message);
-                    this.observer.notify(serverMessage);
-                } catch (Exception e) {
-                    System.err.println("[DEBUG] Failed to process message: " + e.getMessage());
-                }
+                ServerMessage serverMessage = deserialize(message);
+                observer.notify(serverMessage);
             });
-        } catch (DeploymentException | URISyntaxException | IOException e) {
-            throw new Exception("Failed to connect to server: " + e.getMessage());
+        } catch (Exception e) {
+            throw new Exception("WebSocket Connection Error: " + e.getMessage());
         }
     }
 

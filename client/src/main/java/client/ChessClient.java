@@ -76,28 +76,39 @@ public class ChessClient implements ServerMessageObserver {
 
     public String joinGame(String... parameters) {
         assertLoggedIn();
+
         if (parameters.length >= 2) {
             try {
                 int listNumber = Integer.parseInt(parameters[0]);
                 String color = parameters[1].toUpperCase();
                 Integer gameID = gameListCache.get(listNumber);
+
                 if (gameID == null) {
                     return "Invalid game number. Run 'list' first.";
                 }
 
                 // 1. HTTP Join
+                System.out.println("[DEBUG] Attempting HTTP Join for GameID: " + gameID);
                 server.joinGame(authToken, new JoinGameRequest(color, gameID));
+                System.out.println("[DEBUG] HTTP Join successful.");
 
                 // 2. WebSocket Connect
                 if (ws == null) {
+                    System.out.println("[DEBUG] Initializing WebSocketFacade with URL: " + serverUrl);
                     ws = new WebSocketFacade(serverUrl, this);
                 }
+
+                System.out.println("[DEBUG] Sending CONNECT command via WebSocket...");
                 ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
+                System.out.println("[DEBUG] CONNECT command sent to server.");
 
                 return String.format("Joined game %d as %s", listNumber, color);
+
             } catch (NumberFormatException exception){
                 return "Error: '" + parameters[0] + "' is not a valid number.";
             } catch (Exception exception) {
+                // This is crucial: if WebSocketFacade fails to connect, it will land here.
+                System.out.println("[DEBUG] ERROR in joinGame: " + exception.getMessage());
                 return "Error: " + exception.getMessage();
             }
         }
@@ -187,6 +198,7 @@ public class ChessClient implements ServerMessageObserver {
             }
             case ERROR -> {
                 var errorMessage = (websocket.messages.ErrorMessage) message;
+                System.out.println("[DEBUG] RECEIVED ERROR FROM SERVER: " + errorMessage.getErrorMessage());
                 System.out.println("\n" + ui.EscapeSequences.SET_TEXT_COLOR_RED + errorMessage.getErrorMessage());
                 printPrompt();
             }

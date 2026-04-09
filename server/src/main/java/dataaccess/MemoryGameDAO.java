@@ -1,11 +1,12 @@
 package dataaccess;
 
 import model.GameData;
+import chess.ChessGame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MemoryGameDAO implements GameDAO{
+public class MemoryGameDAO implements GameDAO {
     private final List<GameData> games = new ArrayList<>();
     private int next = 1;
 
@@ -16,32 +17,59 @@ public class MemoryGameDAO implements GameDAO{
         games.add(newGame);
         return next++;
     }
+
     @Override
-    public GameData getGame(int gameID){
-        for (GameData game : games){
-            if(game.gameID() == gameID){
-                    return game;
+    public GameData getGame(int gameID) {
+        for (GameData game : games) {
+            if (game.gameID() == gameID) {
+                return game;
             }
         }
         return null;
     }
+
     @Override
-    public Collection<GameData> listGames(){
+    public Collection<GameData> listGames() {
         return games;
     }
+
+    // VERSION 1: Satisfies the error shown in your screenshot (int, ChessGame)
     @Override
-    public void updateGame(GameData updateGame){
-        for(int i =0; i < games.size(); i++){
-            if(games.get(i).gameID() == updateGame.gameID()){
-                games.set(i,updateGame);
+    public void updateGame(int gameID, ChessGame game) throws DataAccessException {
+        GameData existingGame = getGame(gameID);
+        if (existingGame == null) {
+            throw new DataAccessException("Error: game not found");
+        }
+        GameData updatedGame = new GameData(gameID, existingGame.whiteUsername(),
+                existingGame.blackUsername(), existingGame.gameName(), game);
+        updateGame(updatedGame); // Calls Version 3
+    }
+
+    // VERSION 2: The one we added for the 'leave' command
+    @Override
+    public void updateGame(int gameID, String whiteUsername, String blackUsername) throws DataAccessException {
+        GameData existingGame = getGame(gameID);
+        if (existingGame == null) {
+            throw new DataAccessException("Error: game not found");
+        }
+        GameData updatedGame = new GameData(gameID, whiteUsername, blackUsername,
+                existingGame.gameName(), existingGame.game());
+        updateGame(updatedGame); // Calls Version 3
+    }
+
+    // VERSION 3: The original method needed to actually save the object to the list
+    public void updateGame(GameData updateGame) {
+        for (int i = 0; i < games.size(); i++) {
+            if (games.get(i).gameID() == updateGame.gameID()) {
+                games.set(i, updateGame);
                 return;
             }
         }
     }
+
     @Override
-    public void clear(){
+    public void clear() {
         games.clear();
         next = 1;
     }
-
 }
