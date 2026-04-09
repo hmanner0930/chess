@@ -5,11 +5,20 @@ import java.util.Collection;
 public class ChessGame {
     private ChessBoard board;
     private ChessGame.TeamColor teamTurn;
+    private boolean isGameOver = false;
     private static final int BOARD_SIZE = 8;
     public ChessGame() {
         this.board = new ChessBoard();
         this.board.resetBoard();
         this.teamTurn = TeamColor.WHITE;
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.isGameOver = gameOver;
     }
 
     public TeamColor getTeamTurn() {return teamTurn;}
