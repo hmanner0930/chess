@@ -13,9 +13,12 @@ public class ServerFacadeTests {
     @BeforeAll
     public static void init() {
         server = new Server();
-        var port = server.run(0);
+        int port = server.run(0); // This starts the server on a random free port
         System.out.println("Started test HTTP server on " + port);
-        facade = new ServerFacade(port);
+
+        // Convert the integer port into a URL string
+        String serverUrl = "http://localhost:" + port;
+        facade = new ServerFacade(serverUrl);
     }
 
     @AfterAll

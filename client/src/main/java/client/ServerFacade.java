@@ -13,7 +13,6 @@ public class ServerFacade {
         this.serverUrl = url;
     }
 
-    // Methods Here
     public RegisterResult register(RegisterRequest request) throws Exception {
         return this.makeRequest("POST", "/user", null, request, RegisterResult.class);
     }
@@ -44,7 +43,6 @@ public class ServerFacade {
 
     private <T> T makeRequest(String method, String path, String authToken, Object requestBody, Class<T> responseClass) throws Exception {
         try {
-            //Full internet address
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection httpConnect = (HttpURLConnection) url.openConnection();
             httpConnect.setRequestMethod(method);
