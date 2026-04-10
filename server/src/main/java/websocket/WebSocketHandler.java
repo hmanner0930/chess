@@ -152,12 +152,20 @@ public class WebSocketHandler {
 
     private void checkStatus(GameData gameData, ChessGame game) throws Exception {
         String message = null;
-        if (game.isInCheckmate(ChessGame.TeamColor.WHITE)) message = "White is in checkmate!";
-        else if (game.isInCheckmate(ChessGame.TeamColor.BLACK)) message = "Black is in checkmate!";
-        else if (game.isInCheck(ChessGame.TeamColor.WHITE)) message = "White is in check!";
-        else if (game.isInCheck(ChessGame.TeamColor.BLACK)) message = "Black is in check!";
+        if (game.isInCheckmate(ChessGame.TeamColor.WHITE)) {
+            message = "White is in checkmate!";
+        }
+        else if (game.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            message = "Black is in checkmate!";
+        }
+        else if (game.isInCheck(ChessGame.TeamColor.WHITE)) {
+            message = "White is in check!";
+        }
+        else if (game.isInCheck(ChessGame.TeamColor.BLACK)) {
+            message = "Black is in check!";
+        }
 
-        if (message != null) sessions.toAll(gameData.gameID(), new NotificationMessage(message));
+        if (message != null) {sessions.toAll(gameData.gameID(), new NotificationMessage(message));}
     }
 
     private void sendError(WsMessageContext ctx, String message) {

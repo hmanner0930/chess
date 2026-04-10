@@ -67,9 +67,15 @@ public class Server {
 
     private int status(DataAccessException except) {
         String message = except.getMessage().toLowerCase();
-        if (message.contains("bad request")) return 400;
-        if (message.contains("unauthorized")) return 401;
-        if (message.contains("already taken")) return 403;
+        if (message.contains("bad request")) {
+            return 400;
+        }
+        if (message.contains("unauthorized")) {
+            return 401;
+        }
+        if (message.contains("already taken")) {
+            return 403;
+        }
         return 500;
     }
 

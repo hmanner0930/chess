@@ -307,7 +307,9 @@ public class ChessClient implements ServerMessageObserver {
             ChessPosition end = parsePosition(params[1]);
 
             ChessPiece piece = currentGame.getBoard().getPiece(start);
-            if (piece == null) return "No piece at " + params[0];
+            if (piece == null) {
+                return "No piece at " + params[0];
+            }
 
             ChessPiece.PieceType promotionPiece = null;
 
