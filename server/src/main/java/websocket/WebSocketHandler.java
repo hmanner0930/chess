@@ -28,16 +28,28 @@ public class WebSocketHandler {
     }
 
     public void configure(WsConfig ws) {
+        ws.onConnect(ctx -> {
+            // Essential to prevent the 30-second idle timeout
+            ctx.enableAutomaticPings();
+            System.out.println("[SERVER DEBUG] WebSocket connected: " + ctx.sessionId());
+        });
+
         ws.onMessage(ctx -> {
             String message = ctx.message();
             UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
 
+            // Standard command routing
             switch (command.getCommandType()) {
                 case CONNECT -> connect(ctx, command);
                 case MAKE_MOVE -> makeMove(ctx);
                 case LEAVE -> leave(ctx, command);
                 case RESIGN -> resign(ctx, command);
             }
+        });
+
+        ws.onClose(ctx -> {
+            System.out.println("[SERVER DEBUG] WebSocket closed: " + ctx.sessionId());
+            // Optional: Clean up sessions if your SessionManager doesn't handle closure
         });
 
         ws.onError(ctx -> System.out.println("WebSocket Error: " + ctx.error()));

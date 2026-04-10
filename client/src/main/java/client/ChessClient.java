@@ -15,6 +15,8 @@ public class ChessClient implements ServerMessageObserver {
     private String authToken = null;
     private State state = State.SIGNEDOUT;
     private ChessGame.TeamColor playerColor = null;
+    private ChessGame currentGame = null;
+    private int currentGameID = -1;
 
     private final Map<Integer, Integer> gameListCache = new HashMap<>();
 
@@ -38,6 +40,15 @@ public class ChessClient implements ServerMessageObserver {
             case "join" -> joinGame(params);
             case "observe" -> observeGame(params);
             case "quit" -> "quit";
+            case "redraw" -> redrawBoard();
+            case "leave" -> leaveGame();
+            case "make" -> {
+                if (params.length > 0 && params[0].equals("move")) {
+                    yield makeMove(Arrays.copyOfRange(params, 1, params.length));
+                }
+                yield "Use: make move <START> <END>";
+            }
+            case "resign" -> resignGame();
             default -> help();
         };
     }
@@ -102,6 +113,8 @@ public class ChessClient implements ServerMessageObserver {
 
                 System.out.println("[DEBUG] Sending CONNECT command via WebSocket...");
                 ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
+                this.state = State.IN_GAME;
+                this.currentGameID = gameID;
                 System.out.println("[DEBUG] CONNECT command sent to server.");
 
                 return String.format("Joined game %d as %s", listNumber, color);
@@ -136,7 +149,8 @@ public class ChessClient implements ServerMessageObserver {
                     ws = new WebSocketFacade(serverUrl, this);
                 }
                 ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
-
+                this.state = State.IN_GAME;
+                this.currentGameID = gameID;
                 return "Observing game " + listNumber;
             } catch (NumberFormatException exception) {
                 return "Error: '" + params[0] + "' is not a valid number. ";
@@ -194,15 +208,14 @@ public class ChessClient implements ServerMessageObserver {
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 var loadMessage = (websocket.messages.LoadGameMessage) message;
-                boolean isWhiteView = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
-                System.out.println("\n[DEBUG] RECEIVED LOAD_GAME MESSAGE"); // Add this
 
-                if (loadMessage.getGame() != null && loadMessage.getGame().getBoard() != null) {
-                    System.out.println("\n");
-                    BoardDrawer.drawBoard(loadMessage.getGame().getBoard(), isWhiteView);
-                } else {
-                    System.out.println("[DEBUG] Game or Board was null in the message!");
-                }
+                // 1. Update the local data
+                this.currentGame = loadMessage.getGame();
+
+                // 2. Use the helper method (This draws it once)
+                redrawBoard();
+
+                // 3. Print the prompt so the user knows they can type
                 printPrompt();
             }
             case ERROR -> {
@@ -232,6 +245,18 @@ public class ChessClient implements ServerMessageObserver {
                 help - possible commands
                 """;
         }
+        if (state == State.IN_GAME){
+            return
+            """
+            redraw - show the board again
+            leave - exit the game
+            make move <START> <END> - e.g., 'make move e2 e4'
+            resign - give up the match
+            highlight <POSITION> - show legal moves
+            help - possible commands
+            """;
+
+        }
         return """
                 create <NAME> - create game
                 list - list games
@@ -241,6 +266,91 @@ public class ChessClient implements ServerMessageObserver {
                 quit - exit
                 help - possible commands
                 """;
+    }
+    public String leaveGame() {
+        try {
+            // 1. Tell the server we are leaving
+            ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, currentGameID));
+
+            // 2. Reset client state
+            this.state = State.SIGNEDIN;
+            this.currentGame = null;
+            this.currentGameID = -1;
+
+            return "You left the game.";
+        } catch (Exception e) {
+            return "Error leaving game: " + e.getMessage();
+        }
+    }
+
+    private String redrawBoard() {
+        if (currentGame == null) {
+            return "Error: No active game to redraw.";
+        }
+        boolean isWhiteView = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
+
+        // Just drawing directly to the console
+        BoardDrawer.drawBoard(currentGame.getBoard(), isWhiteView);
+
+        return "Board redrawn.";
+    }
+    private ChessPosition parsePosition(String pos) throws Exception {
+        if (pos == null || pos.length() != 2) {
+            throw new Exception("Invalid position: " + pos);
+        }
+
+        char colChar = pos.toLowerCase().charAt(0);
+        char rowChar = pos.charAt(1);
+
+        // Convert 'a'-'h' to 1-8
+        int col = colChar - 'a' + 1;
+        // Convert '1'-'8' to 1-8
+        int row = Character.getNumericValue(rowChar);
+
+        if (col < 1 || col > 8 || row < 1 || row > 8) {
+            throw new Exception("Position out of bounds: " + pos);
+        }
+
+        return new ChessPosition(row, col);
+    }
+    public String makeMove(String... params) {
+        if (params.length < 2) {
+            return "Expected: <START> <END> (e.g., e2 e4)";
+        }
+
+        try {
+            ChessPosition start = parsePosition(params[0]);
+            ChessPosition end = parsePosition(params[1]);
+
+            // For Phase 4, we usually ignore promotion for basic moves,
+            // but you can add it later if needed.
+            ChessMove move = new ChessMove(start, end, null);
+
+            // Create the specialized command for making a move
+            // Ensure you have a MakeMoveCommand class that extends UserGameCommand
+            var command = new websocket.commands.MakeMoveCommand(authToken, currentGameID, move);
+            ws.sendCommand(command);
+
+            return "Move sent: " + params[0] + " to " + params[1];
+        } catch (Exception e) {
+            return "Error making move: " + e.getMessage();
+        }
+    }
+
+    public String resignGame() {
+        System.out.print("Are you sure you want to resign? (yes/no): ");
+        Scanner scanner = new Scanner(System.in);
+        String response = scanner.nextLine().toLowerCase();
+
+        if (response.equals("yes")) {
+            try {
+                ws.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, currentGameID));
+                return "Resignation request sent.";
+            } catch (Exception e) {
+                return "Error resigning: " + e.getMessage();
+            }
+        }
+        return "Resignation cancelled.";
     }
 
     private void assertLoggedIn() {
@@ -253,5 +363,5 @@ public class ChessClient implements ServerMessageObserver {
         return state.toString();
     }
 
-    private enum State { SIGNEDOUT, SIGNEDIN }
+    private enum State { SIGNEDOUT, SIGNEDIN, IN_GAME }
 }

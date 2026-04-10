@@ -9,8 +9,8 @@ public class ServerFacade {
 
     private final String serverUrl;
 
-    public ServerFacade(int port) {
-        this.serverUrl = "http://localhost:" + port;
+    public ServerFacade(String url) {
+        this.serverUrl = url;
     }
 
     // Methods Here
