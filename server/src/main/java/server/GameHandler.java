@@ -33,14 +33,9 @@ public class GameHandler {
         String authToken = ctx.header("authorization");
         JoinGameRequest request = gson.fromJson(ctx.body(), JoinGameRequest.class);
 
-        String color = request.playerColor();
-        if (color != null && !color.equals("WHITE") && !color.equals("BLACK") && !color.isEmpty()) {
-            ctx.status(400);
-            ctx.json(new ErrorResponse("Error: bad request"));
-            return;
-        }
-
+        // Just pass it straight through!
         service.joinGame(authToken, request.playerColor(), request.gameID());
+
         ctx.status(200);
         ctx.json(new Object());
     }

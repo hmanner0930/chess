@@ -35,29 +35,26 @@ public class GameService {
         if (game == null) {
             throw new DataAccessException("Error: bad request");
         }
-        if (color == null || color.isEmpty()) {
-            return;
+
+        // CHANGE: If color is null, empty, or not WHITE/BLACK, it's a 400.
+        if (color == null || color.isEmpty() ||
+                (!color.equals("WHITE") && !color.equals("BLACK"))) {
+            throw new DataAccessException("Error: bad request");
         }
+
         String white = game.whiteUsername();
         String black = game.blackUsername();
 
         if (color.equals("WHITE")) {
-            if (white != null){
-                throw new DataAccessException("Error: already taken");
-            }
+            if (white != null) throw new DataAccessException("Error: already taken");
             white = auth.username();
-        } else if (color.equals("BLACK")) {
-            if (black != null) {
-                throw new DataAccessException("Error: already taken");
-            }
+        } else { // It must be BLACK
+            if (black != null) throw new DataAccessException("Error: already taken");
             black = auth.username();
-        } else {
-            throw new DataAccessException("Error: bad request");
         }
 
         gameDAO.updateGame(new GameData(gameID, white, black, game.gameName(), game.game()));
     }
-
     private AuthData verifyAuth(String token) throws DataAccessException {
         AuthData auth = authDAO.getAuth(token);
         if (auth == null) {
