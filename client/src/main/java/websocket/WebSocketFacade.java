@@ -34,7 +34,7 @@ public class WebSocketFacade extends Endpoint {
                             observer.notify(serverMessage);
                         }
                     } catch (Exception exception) {
-                        exception.printStackTrace();
+                        System.err.printf(exception.getMessage());
                     }
                 }
             });

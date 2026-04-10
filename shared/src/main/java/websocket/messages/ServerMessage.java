@@ -26,11 +26,11 @@ public class ServerMessage {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (!(o instanceof ServerMessage that)) {
+        if (!(object instanceof ServerMessage that)) {
             return false;
         }
         return getServerMessageType() == that.getServerMessageType();
