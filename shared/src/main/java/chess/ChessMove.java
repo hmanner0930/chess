@@ -24,6 +24,16 @@ public class ChessMove {
     }
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(startPosition).append(" -> ").append(endPosition);
+        if (promotionPiece != null) {
+            sb.append(" (Promote: ").append(promotionPiece).append(")");
+        }
+        return sb.toString();
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(startPosition, endPosition, promotionPiece);
     }
