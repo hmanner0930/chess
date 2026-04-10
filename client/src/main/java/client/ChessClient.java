@@ -65,7 +65,7 @@ public class ChessClient implements ServerMessageObserver {
             try {
                 server.createGame(authToken, new CreateGameRequest(parameters[0]));
                 listGames();
-                return "Game '" + parameters[0] + "' created successfully and added to list.";
+                return "Game '" + parameters[0] + "' created successfully; added to list.";
             } catch (Exception except) {
                 return except.getMessage();
             }
