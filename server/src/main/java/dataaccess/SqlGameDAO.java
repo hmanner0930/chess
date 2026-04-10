@@ -85,27 +85,24 @@ public class SqlGameDAO implements GameDAO {
         }
     }
 
-    /**
-     * NEW: Overloaded updateGame to update player names (Used in LEAVE)
-     */
     public void updateGame(int gameID, String whiteUsername, String blackUsername) throws DataAccessException {
         String sql = "UPDATE game SET whiteUsername=?, blackUsername=? WHERE gameID=?";
-        try (var conn = DatabaseManager.getConnection();
-             var preparedStatement = conn.prepareStatement(sql)) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, whiteUsername);
             preparedStatement.setString(2, blackUsername);
             preparedStatement.setInt(3, gameID);
             preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            throw new DataAccessException("failed to update player names");
+        } catch (SQLException exception) {
+            throw new DataAccessException("Didn't update player names");
         }
     }
 
     public Collection<GameData> listGames() throws DataAccessException {
         var games = new ArrayList<GameData>();
         String sql = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM game";
-        try (var conn = DatabaseManager.getConnection();
-             var preparedStatement = conn.prepareStatement(sql);
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(sql);
              var resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
                 games.add(new GameData(
@@ -116,17 +113,17 @@ public class SqlGameDAO implements GameDAO {
                         gson.fromJson(resultSet.getString("game"), ChessGame.class)
                 ));
             }
-        } catch (SQLException ex) {
+        } catch (SQLException exception) {
             throw new DataAccessException("failed to list games");
         }
         return games;
     }
 
     public void clear() throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection();
-             var preparedStatement = conn.prepareStatement("TRUNCATE TABLE game")) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement("TRUNCATE TABLE game")) {
             preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
+        } catch (SQLException exception) {
             throw new DataAccessException("failed to clear");
         }
     }

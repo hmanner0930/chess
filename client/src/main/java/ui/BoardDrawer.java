@@ -109,12 +109,10 @@ public class BoardDrawer {
         }
     }
 
-    // Keep this for standard draws
     public static void drawBoard(ChessBoard board, boolean whitePerspective) {
         drawBoard(board, whitePerspective, null);
     }
 
-    // Add this for highlighted draws
     public static void drawBoard(ChessBoard board, boolean whitePerspective, java.util.Collection<ChessMove> highlightedMoves) {
         printHeaders(whitePerspective);
 

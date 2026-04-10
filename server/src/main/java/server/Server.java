@@ -8,23 +8,20 @@ import websocket.WebSocketHandler;
 
 public class Server {
     private final Javalin javalin;
-    private final WebSocketHandler wsHandler;
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
-        // 1. Initialize DAOs
         UserDAO userDAO = new SqlUserDAO();
         AuthDAO authDAO = new SqlAuthDAO();
         GameDAO gameDAO = new SqlGameDAO();
 
-        // 2. Initialize WebSocketHandler with DAOs
-        this.wsHandler = new WebSocketHandler(gameDAO, authDAO);
+        this.webSocketHandler = new WebSocketHandler(gameDAO, authDAO);
 
         try {
             DatabaseManager.configureDatabase();
-        } catch (DataAccessException ex) {
-            System.err.println("Error configuring database: " + ex.getMessage());
+        } catch (DataAccessException exception) {
+            System.err.println(exception.getMessage());
         }
-
         this.javalin = createServer();
         registerHandlers();
         registerRoutes(userDAO, authDAO, gameDAO);
@@ -54,15 +51,11 @@ public class Server {
     }
 
     private void registerRoutes(UserDAO userDAO, AuthDAO authDAO, GameDAO gameDAO) {
-        // Initialize Services
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
         UserService userService = new UserService(userDAO, authDAO);
         GameService gameService = new GameService(gameDAO, authDAO);
 
-        // --- WebSocket Route ---
-        javalin.ws("/ws", wsHandler::configure);
-
-        // --- HTTP Routes ---
+        javalin.ws("/ws", webSocketHandler::configure);
         javalin.delete("/db", ctx -> new ClearHandler(clearService).handle(ctx));
         javalin.post("/user", ctx -> new UserHandler(userService).register(ctx));
         javalin.post("/session", ctx -> new UserHandler(userService).login(ctx));

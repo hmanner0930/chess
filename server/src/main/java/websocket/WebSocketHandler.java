@@ -87,7 +87,7 @@ public class WebSocketHandler {
                 message = String.format("%s joined as an observer", auth.username());
             }
 
-            sessions.broadcast(command.getGameID(), command.getAuthToken(), new NotificationMessage(message));
+            sessions.toOne(command.getGameID(), command.getAuthToken(), new NotificationMessage(message));
 
         } catch (Exception e) {
             System.out.println("[SERVER DEBUG] Error in connect: " + e.getMessage());
@@ -123,9 +123,9 @@ public class WebSocketHandler {
             gameDAO.updateGame(gameData.gameID(), game);
 
             // 3. Broadcast updates
-            sessions.broadcastToAll(gameData.gameID(), new LoadGameMessage(game));
+            sessions.toAll(gameData.gameID(), new LoadGameMessage(game));
             String msg = String.format("%s moved %s", auth.username(), move);
-            sessions.broadcast(gameData.gameID(), auth.authToken(), new NotificationMessage(msg));
+            sessions.toOne(gameData.gameID(), auth.authToken(), new NotificationMessage(msg));
 
             // 4. Status Checks (Check/Checkmate)
             checkStatus(gameData, game);
@@ -156,7 +156,7 @@ public class WebSocketHandler {
 
         sessions.remove(command.getGameID(), command.getAuthToken());
         String msg = String.format("%s left the game", auth.username());
-        sessions.broadcast(command.getGameID(), command.getAuthToken(), new NotificationMessage(msg));
+        sessions.toOne(command.getGameID(), command.getAuthToken(), new NotificationMessage(msg));
     }
 
     private void resign(WsMessageContext ctx, UserGameCommand command) throws Exception {
@@ -179,7 +179,7 @@ public class WebSocketHandler {
         gameDAO.updateGame(gameData.gameID(), game);
 
         String msg = String.format("%s resigned. Game over.", auth.username());
-        sessions.broadcastToAll(command.getGameID(), new NotificationMessage(msg));
+        sessions.toAll(command.getGameID(), new NotificationMessage(msg));
     }
 
     private void checkStatus(GameData gameData, ChessGame game) throws Exception {
@@ -189,7 +189,7 @@ public class WebSocketHandler {
         else if (game.isInCheck(ChessGame.TeamColor.WHITE)) msg = "White is in check!";
         else if (game.isInCheck(ChessGame.TeamColor.BLACK)) msg = "Black is in check!";
 
-        if (msg != null) sessions.broadcastToAll(gameData.gameID(), new NotificationMessage(msg));
+        if (msg != null) sessions.toAll(gameData.gameID(), new NotificationMessage(msg));
     }
 
     private void sendError(WsMessageContext ctx, String message) {

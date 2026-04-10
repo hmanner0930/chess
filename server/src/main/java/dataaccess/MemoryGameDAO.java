@@ -33,7 +33,6 @@ public class MemoryGameDAO implements GameDAO {
         return games;
     }
 
-    // VERSION 1: Satisfies the error shown in your screenshot (int, ChessGame)
     @Override
     public void updateGame(int gameID, ChessGame game) throws DataAccessException {
         GameData existingGame = getGame(gameID);
@@ -42,10 +41,9 @@ public class MemoryGameDAO implements GameDAO {
         }
         GameData updatedGame = new GameData(gameID, existingGame.whiteUsername(),
                 existingGame.blackUsername(), existingGame.gameName(), game);
-        updateGame(updatedGame); // Calls Version 3
+        updateGame(updatedGame);
     }
 
-    // VERSION 2: The one we added for the 'leave' command
     @Override
     public void updateGame(int gameID, String whiteUsername, String blackUsername) throws DataAccessException {
         GameData existingGame = getGame(gameID);
@@ -54,10 +52,9 @@ public class MemoryGameDAO implements GameDAO {
         }
         GameData updatedGame = new GameData(gameID, whiteUsername, blackUsername,
                 existingGame.gameName(), existingGame.game());
-        updateGame(updatedGame); // Calls Version 3
+        updateGame(updatedGame);
     }
 
-    // VERSION 3: The original method needed to actually save the object to the list
     public void updateGame(GameData updateGame) {
         for (int i = 0; i < games.size(); i++) {
             if (games.get(i).gameID() == updateGame.gameID()) {

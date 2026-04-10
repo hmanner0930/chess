@@ -9,11 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SessionManager {
-    // 1. Move the Connection class INSIDE SessionManager and make it public static
     public static class Connection {
         public String authToken;
         public Session session;
-
         public Connection(String authToken, Session session) {
             this.authToken = authToken;
             this.session = session;
@@ -24,33 +22,33 @@ public class SessionManager {
 
     public void add(int gameID, String authToken, Session session) {
         var connection = new Connection(authToken, session);
-        connections.computeIfAbsent(gameID, k -> new ArrayList<>()).add(connection);
+        connections.computeIfAbsent(gameID, number -> new ArrayList<>()).add(connection);
     }
 
     public void remove(int gameID, String authToken) {
         if (connections.containsKey(gameID)) {
-            connections.get(gameID).removeIf(c -> c.authToken.equals(authToken));
+            connections.get(gameID).removeIf(number -> number.authToken.equals(authToken));
         }
     }
 
-    public void broadcast(int gameID, String excludeAuthToken, ServerMessage serverMessage) throws IOException {
+    public void toOne(int gameID, String excludeAuthToken, ServerMessage serverMessage) throws IOException {
         var occupants = connections.get(gameID);
         if (occupants != null) {
             var cleanUpList = new ArrayList<Connection>();
-            for (var c : occupants) {
-                if (c.session.isOpen()) {
-                    if (!c.authToken.equals(excludeAuthToken)) {
-                        c.session.getRemote().sendString(new Gson().toJson(serverMessage));
+            for (var something : occupants) {
+                if (something.session.isOpen()) {
+                    if (!something.authToken.equals(excludeAuthToken)) {
+                        something.session.getRemote().sendString(new Gson().toJson(serverMessage));
                     }
                 } else {
-                    cleanUpList.add(c);
+                    cleanUpList.add(something);
                 }
             }
             occupants.removeAll(cleanUpList);
         }
     }
 
-    public void broadcastToAll(int gameID, ServerMessage serverMessage) throws IOException {
-        broadcast(gameID, null, serverMessage);
+    public void toAll(int gameID, ServerMessage serverMessage) throws IOException {
+        toOne(gameID, null, serverMessage);
     }
 }
