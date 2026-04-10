@@ -35,8 +35,6 @@ public class GameService {
         if (game == null) {
             throw new DataAccessException("Error: bad request");
         }
-
-        // CHANGE: If color is null, empty, or not WHITE/BLACK, it's a 400.
         if (color == null || color.isEmpty() ||
                 (!color.equals("WHITE") && !color.equals("BLACK"))) {
             throw new DataAccessException("Error: bad request");
@@ -48,7 +46,7 @@ public class GameService {
         if (color.equals("WHITE")) {
             if (white != null) throw new DataAccessException("Error: already taken");
             white = auth.username();
-        } else { // It must be BLACK
+        } else {
             if (black != null) throw new DataAccessException("Error: already taken");
             black = auth.username();
         }

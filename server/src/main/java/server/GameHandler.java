@@ -32,8 +32,6 @@ public class GameHandler {
     public void joinGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
         JoinGameRequest request = gson.fromJson(ctx.body(), JoinGameRequest.class);
-
-        // Just pass it straight through!
         service.joinGame(authToken, request.playerColor(), request.gameID());
 
         ctx.status(200);
