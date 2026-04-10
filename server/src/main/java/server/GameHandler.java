@@ -32,6 +32,14 @@ public class GameHandler {
     public void joinGame(Context ctx) throws DataAccessException {
         String authToken = ctx.header("authorization");
         JoinGameRequest request = gson.fromJson(ctx.body(), JoinGameRequest.class);
+
+        String color = request.playerColor();
+        if (color != null && !color.equals("WHITE") && !color.equals("BLACK") && !color.isEmpty()) {
+            ctx.status(400);
+            ctx.json(new ErrorResponse("Error: bad request"));
+            return;
+        }
+
         service.joinGame(authToken, request.playerColor(), request.gameID());
         ctx.status(200);
         ctx.json(new Object());
