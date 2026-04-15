@@ -4,16 +4,16 @@ import java.util.Objects;
 
 public class UserGameCommand {
 
-    private final CommandType commandType;
+    private final CommandType type;
 
     private final String authToken;
 
-    private final Integer gameID;
+    private final Integer ID;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {
-        this.commandType = commandType;
+        this.type = commandType;
         this.authToken = authToken;
-        this.gameID = gameID;
+        this.ID = gameID;
     }
 
     public enum CommandType {
@@ -24,7 +24,7 @@ public class UserGameCommand {
     }
 
     public CommandType getCommandType() {
-        return commandType;
+        return type;
     }
 
     public String getAuthToken() {
@@ -32,7 +32,7 @@ public class UserGameCommand {
     }
 
     public Integer getGameID() {
-        return gameID;
+        return ID;
     }
 
     @Override
@@ -50,6 +50,7 @@ public class UserGameCommand {
 
     @Override
     public int hashCode() {
+
         return Objects.hash(getCommandType(), getAuthToken(), getGameID());
     }
 }

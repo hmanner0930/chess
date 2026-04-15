@@ -2,10 +2,7 @@ package websocket;
 
 import com.google.gson.Gson;
 import websocket.commands.UserGameCommand;
-import websocket.messages.ServerMessage;
-import websocket.messages.ErrorMessage;
-import websocket.messages.LoadGameMessage;
-import websocket.messages.NotificationMessage;
+import websocket.messages.*;
 
 import jakarta.websocket.*;
 import java.io.IOException;
@@ -19,17 +16,17 @@ public class WebSocketFacade extends Endpoint {
         try {
             //I looked this cleanUrl up
 
-            String clean = url.replace("http://", "").replace("https://", "");
-            URI socketURI = new URI("ws://" + clean + "/ws");
+            String wsURL = url.replace("http://", "").replace("https://", "");
+            URI uri = new URI("ws://" + wsURL + "/ws");
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            this.session = container.connectToServer(this, socketURI);
+            this.session = container.connectToServer(this, uri);
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
                     try {
 
-                        ServerMessage serverMessage = deserialize(message);
+                        ServerMessage serverMessage = readMessage(message);
                         if (serverMessage != null) {
                             observer.notify(serverMessage);
                         }
@@ -44,13 +41,13 @@ public class WebSocketFacade extends Endpoint {
     }
 
     @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {}
+    public void onOpen(Session session, EndpointConfig config) {}
 
     public void sendCommand(UserGameCommand command) throws IOException {
         this.session.getBasicRemote().sendText(new Gson().toJson(command));
     }
 
-    private ServerMessage deserialize(String json) {
+    private ServerMessage readMessage(String json) {
         Gson gson = new Gson();
         ServerMessage something = gson.fromJson(json, ServerMessage.class);
 

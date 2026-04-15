@@ -23,25 +23,41 @@ public class BoardDrawer {
     private static void printRow(ChessBoard board, int row, boolean whitePerspective, java.util.Collection<ChessMove> highlightedMoves) {
         System.out.print(SET_BG_COLOR_DARK_GREY + SET_TEXT_COLOR_WHITE + " " + row + " ");
 
-        int colStart = whitePerspective ? 1 : 8;
-        int colEnd = whitePerspective ? 8 : 1;
-        int colStep = whitePerspective ? 1 : -1;
+        int columnStart;
+        int columnEnd;
+        int columnStep;
 
-        for (int col = colStart; whitePerspective ? col <= colEnd : col >= colEnd; col += colStep) {
-            ChessPosition currentPos = new ChessPosition(row, col);
+        if (whitePerspective) {
+            columnStart = 1;
+            columnEnd = 8;
+            columnStep = 1;
+        } else {
+            columnStart = 8;
+            columnEnd = 1;
+            columnStep = -1;
+        }
 
-            // 1. Determine base square color
+        for (int col = columnStart; ; col += columnStep) {
+
+            if (whitePerspective) {
+                if (col > columnEnd) {
+                    break;
+                }
+            } else {
+                if (col < columnEnd) {
+                    break;
+                }
+            }
+
+            ChessPosition currentPosition = new ChessPosition(row, col);
             boolean isLightSquare = (row + col) % 2 == 1;
             String backgroundColor = isLightSquare ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_BLACK;
 
-            // 2. Check for highlights
             if (highlightedMoves != null) {
                 for (ChessMove move : highlightedMoves) {
-                    if (move.getStartPosition().equals(currentPos)) {
-                        // Highlight the selected piece's starting square
-                        backgroundColor = SET_BG_COLOR_YELLOW;
-                    } else if (move.getEndPosition().equals(currentPos)) {
-                        // Highlight legal destination squares
+                    if (move.getStartPosition().equals(currentPosition)) {
+                        backgroundColor = SET_BG_COLOR_BLUE;
+                    } else if (move.getEndPosition().equals(currentPosition)) {
                         backgroundColor = isLightSquare ? SET_BG_COLOR_GREEN : SET_BG_COLOR_DARK_GREEN;
                     }
                 }
@@ -49,7 +65,7 @@ public class BoardDrawer {
 
             System.out.print(backgroundColor);
 
-            ChessPiece piece = board.getPiece(currentPos);
+            ChessPiece piece = board.getPiece(currentPosition);
             if (piece != null) {
                 printPiece(piece);
             } else {
@@ -113,18 +129,39 @@ public class BoardDrawer {
         drawBoard(board, whitePerspective, null);
     }
 
-    public static void drawBoard(ChessBoard board, boolean whitePerspective, java.util.Collection<ChessMove> highlightedMoves) {
-        printHeaders(whitePerspective);
+    public static void drawBoard(ChessBoard board, boolean whiteView, java.util.Collection<ChessMove> highlightedMoves) {
+        printHeaders(whiteView);
 
-        int rowStart = whitePerspective ? 8 : 1;
-        int rowEnd = whitePerspective ? 1 : 8;
-        int rowStep = whitePerspective ? -1 : 1;
+        int rowStart;
+        int rowEnd;
+        int rowStep;
 
-        for (int row = rowStart; whitePerspective ? row >= rowEnd : row <= rowEnd; row += rowStep) {
-            printRow(board, row, whitePerspective, highlightedMoves); // Pass moves here
+        if (whiteView) {
+            rowStart = 8;
+            rowEnd = 1;
+            rowStep = -1;
+        } else {
+            rowStart = 1;
+            rowEnd = 8;
+            rowStep = 1;
         }
 
-        printHeaders(whitePerspective);
+        for (int row = rowStart; ; row += rowStep) {
+
+            if (whiteView) {
+                if (row < rowEnd) {
+                    break;
+                }
+            } else {
+                if (row > rowEnd) {
+                    break;
+                }
+            }
+
+            printRow(board, row, whiteView, highlightedMoves);
+        }
+
+        printHeaders(whiteView);
         System.out.print(RESET_BG_COLOR + RESET_TEXT_COLOR);
     }
 }

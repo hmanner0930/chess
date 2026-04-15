@@ -4,75 +4,84 @@ import java.util.*;
 import model.*;
 import chess.*;
 import ui.BoardDrawer;
+import ui.EscapeSequences;
 import websocket.ServerMessageObserver;
 import websocket.WebSocketFacade;
 import websocket.commands.UserGameCommand;
 
 public class ChessClient implements ServerMessageObserver {
+    //This stuff stores the specific session stuff
     private final ServerFacade server;
     private WebSocketFacade webSocket;
+    //connection to server
     private final String serverUrl;
     private String authToken = null;
     private State stateOfPlayer = State.SIGNEDOUT;
     private ChessGame.TeamColor playerColor = null;
     private ChessGame currentGame = null;
+    //local game state
     private int currentGameID = -1;
 
     private final Map<Integer, Integer> gameListData = new HashMap<>();
 
+    //constructor of HTTP facade
     public ChessClient(String serverUrl) {
         this.serverUrl = serverUrl;
         this.server = new ServerFacade(serverUrl);
     }
 
+    //command sorter eval; sorts strings into the correct java methods
     public String eval(String input) {
         String[] tokens = input.toLowerCase().split("\\s+");
         String command = (tokens.length > 0) ? tokens[0] : "help";
         //had to look copyOfRange up
-        String[] params = (tokens.length > 1) ? Arrays.copyOfRange(tokens, 1, tokens.length) : new String[0];
+        String[] args = (tokens.length > 1) ? Arrays.copyOfRange(tokens, 1, tokens.length) : new String[0];
 
         return switch (command) {
-            case "login" -> login(params);
-            case "register" -> register(params);
+            case "login" -> login(args);
+            case "register" -> register(args);
             case "logout" -> logout();
-            case "create" -> createGame(params);
+            case "create" -> createGame(args);
             case "list" -> listGames();
-            case "join" -> joinGame(params);
-            case "observe" -> observeGame(params);
+            case "join" -> joinGame(args);
+            case "observe" -> observeGame(args);
             case "quit" -> "quit";
             case "redraw" -> redrawBoard();
             case "leave" -> leaveGame();
             case "make" -> {
-                if (params.length > 0 && params[0].equals("move")) {
-                    yield makeMove(Arrays.copyOfRange(params, 1, params.length));
+                if (args.length > 0 && args[0].equals("move")) {
+                    yield makeMove(Arrays.copyOfRange(args, 1, args.length));
                 }
                 yield "Use: make move <START> <END>";
             }
             case "resign" -> resignGame();
             case "highlight" -> {
-                if (params.length > 0) {
-                    yield highlightMoves(params[0]);
+                if (args.length > 0) {
+                    yield highlightLegalMoves(args[0]);
                 }
                 yield "Expected: highlight <POSITION>";
             }
             default -> help();
         };
     }
-
-    public String createGame(String... parameters) {
+    //Here tells the server to make a game and then immediately refreshes because there were problems there
+    //list gets the game and puts it into game list data
+    public String createGame(String... args) {
         assertLoggedIn();
-        if (parameters.length >= 1) {
+        if (args.length >= 1) {
             try {
-                server.createGame(authToken, new CreateGameRequest(parameters[0]));
+                server.createGame(authToken, new CreateGameRequest(args[0]));
                 listGames();
-                return "Game '" + parameters[0] + "' created successfully; added to list.";
+                return "Game '" + args[0] + "' created successfully; added to list.";
             } catch (Exception except) {
                 return except.getMessage();
             }
         }
         return "Expected: <NAME>";
     }
-
+    //Here it gets the games and then lists them as active games in that certain format
+    //Sends HTTP request to update the database then the CONNECT command for websocket
+    //HTTP and Websockets
     public String listGames() {
         assertLoggedIn();
         try {
@@ -81,25 +90,35 @@ public class ChessClient implements ServerMessageObserver {
             StringBuilder stringThing = new StringBuilder("\nActive Games:\n");
             int i = 1;
             for (var game : listResponse.games()) {
+                String whitePlayer;
+                if (game.whiteUsername() != null) {
+                    whitePlayer = game.whiteUsername();
+                } else {
+                    whitePlayer = "empty";
+                }
+                String blackPlay;
+                if (game.blackUsername() != null) {
+                    blackPlay = game.blackUsername();
+                } else {
+                    blackPlay = "empty";
+                }
                 gameListData.put(i, game.gameID());
                 stringThing.append(String.format(" %d. %s (White: %s, Black: %s)\n",
-                        i++, game.gameName(),
-                        game.whiteUsername() != null ? game.whiteUsername() : "empty",
-                        game.blackUsername() != null ? game.blackUsername() : "empty"));
+                        i++, game.gameName(), whitePlayer, blackPlay));
             }
             return stringThing.toString();
         } catch (Exception exception) {
             return exception.getMessage();
         }
     }
-
-    public String joinGame(String... parameters) {
+    //Here a user tries to join a game would be nice if they put in invalid number to list games
+    public String joinGame(String... args) {
         assertLoggedIn();
 
-        if (parameters.length >= 2) {
+        if (args.length >= 2) {
             try {
-                int listNumber = Integer.parseInt(parameters[0]);
-                String color = parameters[1].toUpperCase();
+                int listNumber = Integer.parseInt(args[0]);
+                String color = args[1].toUpperCase();
 
                 if (!gameListData.containsKey(listNumber)) {
                     listGames();
@@ -109,7 +128,11 @@ public class ChessClient implements ServerMessageObserver {
                 if (gameID == null) {
                     return "Error: Game number " + listNumber + " does not exist. Run 'list'.";
                 }
-                this.playerColor = color.equals("WHITE") ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
+                if (color.equals("WHITE")) {
+                    this.playerColor = ChessGame.TeamColor.WHITE;
+                } else {
+                    this.playerColor = ChessGame.TeamColor.BLACK;
+                }
 
                 server.joinGame(authToken, new JoinGameRequest(color, gameID));
 
@@ -124,7 +147,7 @@ public class ChessClient implements ServerMessageObserver {
                 return String.format("Joined game %d as %s", listNumber, color);
 
             } catch (NumberFormatException exception){
-                return "Error: '" + parameters[0] + "' is not a valid number.";
+                return "Error: '" + args[0] + "' is not a valid number.";
             } catch (Exception exception) {
                 return "Error: " + exception.getMessage();
             }
@@ -132,12 +155,12 @@ public class ChessClient implements ServerMessageObserver {
         return "Expected: <ID> [WHITE|BLACK]";
     }
 
-    public String observeGame(String... params) {
+    public String observeGame(String... args) {
         assertLoggedIn();
         this.playerColor = ChessGame.TeamColor.WHITE;
-        if (params.length >= 1) {
+        if (args.length >= 1) {
             try {
-                int listNumber = Integer.parseInt(params[0]);
+                int listNumber = Integer.parseInt(args[0]);
                 if (!gameListData.containsKey(listNumber)) {
                     listGames();
                 }
@@ -157,7 +180,7 @@ public class ChessClient implements ServerMessageObserver {
                 this.currentGameID = gameID;
                 return "Observing game " + listNumber;
             } catch (NumberFormatException exception) {
-                return "Error: '" + params[0] + "' is not a valid number.";
+                return "Error: '" + args[0] + "' is not a valid number.";
             } catch (Exception exception) {
                 return "Error: " + exception.getMessage();
             }
@@ -177,25 +200,25 @@ public class ChessClient implements ServerMessageObserver {
             return exception.getMessage();
         }
     }
-
-    public String login(String... parameters) {
-        if (parameters.length >= 2) {
+//calls registerRequest to login and then standard HTTP to create a session
+    public String login(String... args) {
+        if (args.length >= 2) {
             try {
-                var listResponse = server.login(new RegisterRequest(parameters[0], parameters[1], null));
+                var listResponse = server.login(new RegisterRequest(args[0], args[1], null));
                 authToken = listResponse.authToken();
                 stateOfPlayer = State.SIGNEDIN;
-                return String.format("Logged in as %s.", parameters[0]);
+                return String.format("Logged in as %s.", args[0]);
             } catch (Exception exception) {
                 return exception.getMessage();
             }
         }
         return "Expected: <USERNAME> <PASSWORD>";
     }
-
-    public String register(String... parameters) {
-        if (parameters.length >= 3) {
+    //calls registerRequest to login and then standard HTTP to create a session
+    public String register(String... args) {
+        if (args.length >= 3) {
             try {
-                var listResponse = server.register(new RegisterRequest(parameters[0], parameters[1], parameters[2]));
+                var listResponse = server.register(new RegisterRequest(args[0], args[1], args[2]));
                 authToken = listResponse.authToken();
                 stateOfPlayer = State.SIGNEDIN;
                 return "Registered and logged in.";
@@ -206,24 +229,28 @@ public class ChessClient implements ServerMessageObserver {
         return "Expected: <USERNAME> <PASSWORD> <EMAIL>";
     }
 
+    //The server has to communicate with us
+    //LOAD game updates the local board then redraws
+    //ERROR and NOTIFICATION Prints the messages form server in certain color
+    //How client knows
     @Override
-    public void notify(websocket.messages.ServerMessage message) {
-        System.out.println("DEBUG: Client received a message from server: " + message.getServerMessageType());
-        switch (message.getServerMessageType()) {
+    public void notify(websocket.messages.ServerMessage msg) {
+        switch (msg.getServerMessageType()) {
             case LOAD_GAME -> {
-                var loadGameMessage = (websocket.messages.LoadGameMessage) message;
+                var loadGameMessage = (websocket.messages.LoadGameMessage) msg;
                 this.currentGame = loadGameMessage.getGame();
+                System.out.println();
                 redrawBoard();
                 System.out.print("\n" + ui.EscapeSequences.SET_TEXT_COLOR_WHITE + "[" + getState() + "] >>> ");
             }
             case ERROR -> {
-                var errorMessage = (websocket.messages.ErrorMessage) message;
+                var errorMessage = (websocket.messages.ErrorMessage) msg;
                 System.out.println("\n" + ui.EscapeSequences.SET_TEXT_COLOR_RED + errorMessage.getErrorMessage());
                 System.out.print("\n" + ui.EscapeSequences.SET_TEXT_COLOR_WHITE + "[" + getState() + "] >>> ");
             }
             case NOTIFICATION -> {
-                var notification = (websocket.messages.NotificationMessage) message;
-                System.out.println("\n" + ui.EscapeSequences.SET_TEXT_COLOR_YELLOW + notification.getMessage());
+                var notification = (websocket.messages.NotificationMessage) msg;
+                System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_MAGENTA + notification.getMessage());
                 System.out.print("\n" + ui.EscapeSequences.SET_TEXT_COLOR_WHITE + "[" + getState() + "] >>> ");
             }
         }
@@ -272,7 +299,7 @@ public class ChessClient implements ServerMessageObserver {
             return "Error leaving game: " + exception.getMessage();
         }
     }
-
+    //redraws the board pretty simply
     private String redrawBoard() {
         if (currentGame == null) {
             return "Error: No game to redraw.";
@@ -288,15 +315,16 @@ public class ChessClient implements ServerMessageObserver {
             throw new Exception("Invalid position: " + position);
         }
 
-        char columnChar = position.toLowerCase().charAt(0);
-        char rowChar = position.charAt(1);
-        int column = columnChar - 'a' + 1;
-        int row = Character.getNumericValue(rowChar);
+        char columnC = position.toLowerCase().charAt(0);
+        char rowC = position.charAt(1);
+        int column = columnC - 'a' + 1;
+        int row = Character.getNumericValue(rowC);
         if (column < 1 || column > 8 || row < 1 || row > 8) {
             throw new Exception("Position out of bounds: " + position);
         }
         return new ChessPosition(row, column);
     }
+    //converts the certain chess positions to ChessMove object but also checks for promotion
     public String makeMove(String... params) {
         if (params.length < 2) {
             return "Expected: <START> <END>";
@@ -329,13 +357,13 @@ public class ChessClient implements ServerMessageObserver {
             return "Error making move: " + exception.getMessage();
         }
     }
-
+    //This asks for permission to resign from game a suggested added feature then tells the server the decision
     public String resignGame() {
         System.out.print("Are you sure you want to resign? (yes/no): ");
         Scanner scanner = new Scanner(System.in);
-        String response = scanner.nextLine().toLowerCase();
+        String decision = scanner.nextLine().toLowerCase();
 
-        if (response.equals("yes")) {
+        if (decision.equals("yes")) {
             try {
                 webSocket.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, currentGameID));
                 return "Resignation sent.";
@@ -345,39 +373,50 @@ public class ChessClient implements ServerMessageObserver {
         }
         return "Resignation not.";
     }
-    public String highlightMoves(String positionStr) {
+    //calls the board with a set of valid moves to color those squares
+    //of course calls validMoves
+    public String highlightLegalMoves(String position) {
         if (currentGame == null) {
             return "No active game.";
         }
 
         try {
-            ChessPosition startPos = parsePosition(positionStr);
-            Collection<ChessMove> validMoves = currentGame.validMoves(startPos);
+            ChessPosition startPosition = parsePosition(position);
+            Collection<ChessMove> validMoves = currentGame.validMoves(startPosition);
 
             if (validMoves == null || validMoves.isEmpty()) {
-                return "No valid moves for " + positionStr;
+                return "No valid moves for " + position;
             }
 
-            boolean isWhiteView = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
+            boolean isWhitePerspective = (playerColor == null || playerColor == ChessGame.TeamColor.WHITE);
 
             System.out.println("\n");
-            BoardDrawer.drawBoard(currentGame.getBoard(), isWhiteView, validMoves);
+            BoardDrawer.drawBoard(currentGame.getBoard(), isWhitePerspective, validMoves);
 
-            return "Moves for " + positionStr;
+            return "Moves for " + position;
         } catch (Exception exception) {
             return "Error: " + exception.getMessage();
         }
     }
+    //This I kind of looked up because I was having trouble with full words not working just letters
     private ChessPiece.PieceType promptForPromotion() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.print("Promote to (Q/B/N/R)? ");
             String input = scanner.nextLine().toUpperCase().trim();
             switch (input) {
-                case "Q" -> { return ChessPiece.PieceType.QUEEN; }
-                case "B" -> { return ChessPiece.PieceType.BISHOP; }
-                case "N" -> { return ChessPiece.PieceType.KNIGHT; }
-                case "R" -> { return ChessPiece.PieceType.ROOK; }
+                case "Q" -> {
+                    return ChessPiece.PieceType.QUEEN;
+                }
+                case "B" -> {
+                    return ChessPiece.PieceType.BISHOP;
+                }
+                case "N" -> {
+                    return ChessPiece.PieceType.KNIGHT;
+                }
+                case "R" -> {
+                    return ChessPiece.PieceType.ROOK;
+                }
                 default -> System.out.println("Invalid choice.");
             }
         }

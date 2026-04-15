@@ -5,57 +5,59 @@ import java.io.*;
 import java.net.*;
 import model.*;
 
-public class ServerFacade {
 
+public class ServerFacade {
+    //address of server and declaration/constructor
     private final String serverUrl;
 
     public ServerFacade(String url) {
         this.serverUrl = url;
     }
-
+    //These use the post to send data
     public RegisterResult register(RegisterRequest request) throws Exception {
-        return this.makeRequest("POST", "/user", null, request, RegisterResult.class);
+        return this.sendRequest("POST", "/user", null, request, RegisterResult.class);
     }
 
     public RegisterResult login(RegisterRequest request) throws Exception {
-        return this.makeRequest("POST", "/session", null, request, RegisterResult.class);
+        return this.sendRequest("POST", "/session", null, request, RegisterResult.class);
     }
-
+    //These use delete
     public void logout(String authToken) throws Exception {
-        this.makeRequest("DELETE", "/session", authToken, null, null);
+        this.sendRequest("DELETE", "/session", authToken, null, null);
     }
-
+    //Uses get to return list of games
     public ListGamesResult listGames(String authToken) throws Exception {
-        return this.makeRequest("GET", "/game", authToken, null, ListGamesResult.class);
+        return this.sendRequest("GET", "/game", authToken, null, ListGamesResult.class);
     }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) throws Exception {
-        return this.makeRequest("POST", "/game", authToken, request, CreateGameResult.class);
+        return this.sendRequest("POST", "/game", authToken, request, CreateGameResult.class);
     }
-
+    //Uses put; Updates state of the game
     public void joinGame(String authToken, JoinGameRequest request) throws Exception {
-        this.makeRequest("PUT", "/game", authToken, request, null);
+        this.sendRequest("PUT", "/game", authToken, request, null);
     }
-
+    //Uses Delete
     public void clear() throws Exception {
-        this.makeRequest("DELETE", "/db", null, null, null);
+        this.sendRequest("DELETE", "/db", null, null, null);
     }
 
-    private <T> T makeRequest(String method, String path, String authToken, Object requestBody, Class<T> responseClass) throws Exception {
+    private <T> T sendRequest(String method, String path, String authToken, Object req, Class<T> responseClass) throws Exception {
         try {
+            //here combines the url with the path then opens connection
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection httpConnect = (HttpURLConnection) url.openConnection();
             httpConnect.setRequestMethod(method);
-
+            //if user is logged in puts authToken in the header for verification
             if (authToken != null) {
                 httpConnect.addRequestProperty("authorization", authToken);
             }
-
-            if (requestBody != null) {
+            //creating a game or registering, sends details to the server
+            if (req != null) {
                 httpConnect.setDoOutput(true);
-                writeBody(requestBody, httpConnect);
+                writeBody(req, httpConnect);
             }
-
+            //gets to the server if it returns a not successful the method will crash and return
             httpConnect.connect();
             throwIfNotSuccessful(httpConnect);
             return readBody(httpConnect, responseClass);
@@ -63,7 +65,7 @@ public class ServerFacade {
             throw new Exception(exception.getMessage());
         }
     }
-
+    //here we have writeBody uses Gson to turn a Java object into JSON string then output stream
     private static void writeBody(Object requestBody, HttpURLConnection http) throws IOException {
         http.addRequestProperty("Content-Type", "application/json");
         String requestData = new Gson().toJson(requestBody);
@@ -74,18 +76,25 @@ public class ServerFacade {
 
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException {
         var status = http.getResponseCode();
-        //If error not in 400s or 500s
         if (status / 100 != 2) {
+            //if not 200
+            try (InputStream respBody = http.getErrorStream()) {
+                if (respBody != null) {
+                    InputStreamReader reader = new InputStreamReader(respBody);
+                    ErrorResponse error = new Gson().fromJson(reader, ErrorResponse.class);
+                    throw new IOException(error.message());
+                }
+            }
             throw new IOException("Error: " + status);
         }
     }
-
-    private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
+    //Takes the JSON response string coming back and turns it into Java object
+    private static <T> T readBody(HttpURLConnection http, Class<T> type) throws IOException {
         T response = null;
         try (InputStream responseBody = http.getInputStream()) {
-            if (responseClass != null) {
+            if (type != null) {
                 InputStreamReader reader = new InputStreamReader(responseBody);
-                response = new Gson().fromJson(reader, responseClass);
+                response = new Gson().fromJson(reader, type);
             }
         } catch (IOException exception) {
 

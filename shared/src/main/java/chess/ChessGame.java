@@ -50,6 +50,9 @@ public class ChessGame {
 
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
+        if (piece == null) {
+            return new java.util.ArrayList<>();
+        }
         Collection<ChessMove> allMoves = piece.pieceMoves(board,startPosition);
         Collection<ChessMove> legalMoves = new java.util.ArrayList<>();
         TeamColor team = piece.getTeamColor();

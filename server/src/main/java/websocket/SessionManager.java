@@ -4,51 +4,60 @@ import org.eclipse.jetty.websocket.api.Session;
 import websocket.messages.ServerMessage;
 import com.google.gson.Gson;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class SessionManager {
-    public static class Connection {
-        public String authToken;
-        public Session session;
-        public Connection(String authToken, Session session) {
-            this.authToken = authToken;
+    private static class Connection {
+        String auth;
+        Session session;
+
+        Connection(String auth, Session session) {
+            this.auth = auth;
             this.session = session;
         }
     }
+    private final Map<Integer, List<Connection>> gameSessions = new HashMap<>();
 
-    public final ConcurrentHashMap<Integer, List<Connection>> connections = new ConcurrentHashMap<>();
-
-    public void add(int gameID, String authToken, Session session) {
-        var connection = new Connection(authToken, session);
-        connections.computeIfAbsent(gameID, number -> new ArrayList<>()).add(connection);
-    }
-
-    public void remove(int gameID, String authToken) {
-        if (connections.containsKey(gameID)) {
-            connections.get(gameID).removeIf(number -> number.authToken.equals(authToken));
+    public void add(int gameID, String auth, Session session) {
+        Connection conn = new Connection(auth, session);
+        if (!gameSessions.containsKey(gameID)) {
+            gameSessions.put(gameID, new ArrayList<>());
         }
+        gameSessions.get(gameID).add(conn);
     }
 
-    public void toOne(int gameID, String excludeAuthToken, ServerMessage serverMessage) throws IOException {
-        var occupants = connections.get(gameID);
-        if (occupants != null) {
-            var cleanUpList = new ArrayList<Connection>();
-            for (var something : occupants) {
-                if (something.session.isOpen()) {
-                    if (!something.authToken.equals(excludeAuthToken)) {
-                        something.session.getRemote().sendString(new Gson().toJson(serverMessage));
-                    }
-                } else {
-                    cleanUpList.add(something);
+    public void remove(int gameID, String auth) {
+        List<Connection> list = gameSessions.get(gameID);
+        if (list != null) {
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).auth.equals(auth)) {
+                    list.remove(i);
+                    break;
                 }
             }
-            occupants.removeAll(cleanUpList);
         }
     }
 
-    public void toAll(int gameID, ServerMessage serverMessage) throws IOException {
-        toOne(gameID, null, serverMessage);
+    public void toOne(int gameID, String skipToken, ServerMessage msg) throws IOException {
+        List<Connection> conns = gameSessions.get(gameID);
+        if (conns == null) return;
+
+        List<Connection> closed = new ArrayList<>();
+        String json = new Gson().toJson(msg);
+
+        for (Connection connection : conns) {
+            if (connection.session.isOpen()) {
+                if (skipToken == null || !connection.auth.equals(skipToken)) {
+                    connection.session.getRemote().sendString(json);
+                }
+            } else {
+                closed.add(connection);
+            }
+        }
+        conns.removeAll(closed);
+    }
+
+    public void toAll(int gameID, ServerMessage msg) throws IOException {
+        toOne(gameID, null, msg);
     }
 }
